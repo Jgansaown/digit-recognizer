@@ -1,0 +1,17 @@
+# Ignore all
+*
+
+# Git
+!.gitignore
+!README.md
+
+# Rust
+!Cargo.toml
+!Cargo.lock
+!src
+!src/*.rs
+
+# Datasets
+!files
+!files/dataset.json
+!files/download.py
