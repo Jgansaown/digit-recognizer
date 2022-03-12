@@ -10,6 +10,8 @@
 !Cargo.lock
 !src
 !src/*.rs
+!examples
+!examples/*.rs
 
 # Datasets
 !files
