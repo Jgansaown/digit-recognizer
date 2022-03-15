@@ -8,12 +8,8 @@ use wasm_bindgen::prelude::*;
 pub fn load_mnist_data(data: Vec<u8>, labels: Vec<u8>) -> String {
     log("Hello from Rust Wasm!");
 
-    match mnist::Dataset::load(data, labels) {
-        Ok(ds) => {
-            format!("Nums: {}, Rows: {}, Cols: {}", ds.nums, ds.rows, ds.cols)
-        }
-        Err(e) => e.to_string(),
-    }
+    let ds = mnist::Dataset::load(data, labels);
+    format!("Num: {}, Size: {}", ds.num, ds.size)
 }
 
 #[wasm_bindgen]

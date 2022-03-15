@@ -46,7 +46,7 @@ fn main() {
     println!("{:?}", data2);
     println!("dist={}", dist);
 
-    println!("{}, {}, {}", ds.nums, ds.rows, ds.cols);
+    println!("{}, {}", ds.num, ds.size);
     println!("{:?}", ds.iter().next());
 
     // for (i, (data, label)) in ds.iter().enumerate() {
