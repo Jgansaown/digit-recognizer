@@ -1,4 +1,4 @@
-mod helper;
+pub mod helper;
 pub mod k_means;
 pub mod mnist;
 

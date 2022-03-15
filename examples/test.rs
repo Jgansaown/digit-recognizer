@@ -1,5 +1,6 @@
 use std::fs;
 
+use rust_digit_recognition::helper::{Centroids, Clusters};
 use rust_digit_recognition::k_means;
 use rust_digit_recognition::mnist;
 
@@ -7,7 +8,6 @@ use image::DynamicImage;
 use image::GrayImage;
 
 use getrandom::getrandom;
-
 
 fn load_training_data() -> (Vec<u8>, Vec<u8>) {
     let data = fs::read("./files/mnist-training-data")
@@ -32,11 +32,19 @@ fn save_image(filename: &str, data: &[u8]) {
 
 fn main() {
     let (data, labels) = load_training_data();
-
     println!("MNIST test data size = {}", data.len());
     println!("MNIST test label size = {}", labels.len());
 
-    let ds = mnist::Dataset::load(data, labels).expect("Error loading dataset");
+    let ds = mnist::Dataset::load(data, labels);
+    println!("{}, {}", ds.num, ds.size);
+
+    let mut iter = ds.iter();
+    let data1 = iter.next().unwrap();
+    let data2 = iter.next().unwrap();
+    let dist = data1.euclidean_distance(&data2);
+    println!("{:?}", data1);
+    println!("{:?}", data2);
+    println!("dist={}", dist);
 
     println!("{}, {}, {}", ds.nums, ds.rows, ds.cols);
     println!("{:?}", ds.iter().next());
@@ -69,4 +77,9 @@ fn main() {
     // }
 
     k_means::test([[0; 10]; 11]);
+
+    let initial = Centroids::new(28 * 28, 10, vec![0; 28 * 28 * 10]);
+    let clusters = Clusters::new(ds, initial);
+
+    println!("{:?}", clusters.centroids.iter().next());
 }

@@ -98,7 +98,7 @@ impl KMeansCluster {
             }
             counts[assigned as usize] += 1;
         }
-        
+
         let new: Vec<Vec<f32>> = counts
             .iter()
             .zip(new_centroids.iter())
@@ -107,17 +107,20 @@ impl KMeansCluster {
                 // TODO: if count is zero then keep the centroid?
                 if count == 0 {
                     None
-                }
-                else {
+                } else {
                     Some(centroid.iter().map(|&v| v / (count as f32)).collect())
                 }
             })
             .collect();
-        
-        let max_diff = self.centroids.iter().zip(new.iter()).map(|(o, n)| {
-            euclidean_distance(o, n)
-        }).reduce(f32::max).unwrap();
-        
+
+        let max_diff = self
+            .centroids
+            .iter()
+            .zip(new.iter())
+            .map(|(o, n)| euclidean_distance(o, n))
+            .reduce(f32::max)
+            .unwrap();
+
         // println!("{:?}", new_centroids);
         println!("{:?}", counts);
         println!("{}", max_diff);
