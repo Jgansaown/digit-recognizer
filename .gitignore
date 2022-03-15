@@ -18,3 +18,9 @@
 !files/dataset.json
 !files/download.py
 !files/display.py
+
+# Website files
+!www
+!www/favicon.ico
+!www/*.html
+!www/*js
