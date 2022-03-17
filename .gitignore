@@ -17,6 +17,12 @@
 !files/download.py
 !files/display.py
 
+# Web files
+!web/favicon.ico
+!web/*.html
+!web/*.js
+www
+
 # General files
 !README.md
 !Makefile

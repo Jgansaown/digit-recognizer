@@ -31,3 +31,7 @@ jobs:
       run: ls -al www
     - name: Check Git
       run: git --version
+    - name: Build gh-pages
+      run: make gh-pages
+    - name: Push gh-pages
+      run: make push-pages
