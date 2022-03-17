@@ -1,7 +1,8 @@
 // import wasmInit from "./pkg/rust_digit_recognition.js";
 import wasmInit, {
     load_mnist_data,
-    test_k_means,
+    as_png_base64_string,
+    get_nth_image,
   } from "./pkg/rust_digit_recognition.js";
 
 main();
@@ -45,6 +46,8 @@ document.getElementById('mnist_training_label_input').addEventListener('change',
   }
 });
 
+
+let count = 0;
 document.getElementById('start_button').addEventListener('click', async (e) => {
   console.log("Starting...");
   console.log('Training Data:');
@@ -52,7 +55,7 @@ document.getElementById('start_button').addEventListener('click', async (e) => {
   console.log('Training Label:');
   console.log(mnist_training_label);
 
-  await load_data(mnist_training_data, mnist_training_label);
-  
-  test_k_means(mnist_training_data, mnist_training_label);
+  let image = get_nth_image(mnist_training_data, mnist_training_label, count);
+  document.getElementById('test_image').src = as_png_base64_string(image);
+  count += 1;
 });

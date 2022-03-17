@@ -1,5 +1,5 @@
 wasm:
-	wasm-pack build -d web/pkg --target web
+	wasm-pack build -d web/pkg --target web --release
 
 serve-dev: wasm
 	python3 -m http.server -d web 8000
