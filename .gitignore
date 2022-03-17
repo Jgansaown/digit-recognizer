@@ -10,6 +10,8 @@
 !Cargo.lock
 !src
 !src/*.rs
+!src/k_means
+!src/k_means/*.rs
 !examples
 !examples/*.rs
 

@@ -1,6 +1,5 @@
 use std::fs;
 
-use rust_digit_recognition::helper::{Centroids, Clusters};
 use rust_digit_recognition::k_means;
 use rust_digit_recognition::mnist;
 
@@ -31,55 +30,23 @@ fn save_image(filename: &str, data: &[u8]) {
 }
 
 fn main() {
-    let (data, labels) = load_training_data();
-    println!("MNIST test data size = {}", data.len());
-    println!("MNIST test label size = {}", labels.len());
+    // let (data, labels) = load_training_data();
+    let (data, labels) = load_testing_data();
+
+    println!("data size = {}", data.len());
+    println!("label size = {}", labels.len());
 
     let ds = mnist::Dataset::load(data, labels);
     println!("{}, {}", ds.num, ds.size);
 
-    let mut iter = ds.iter();
-    let data1 = iter.next().unwrap();
-    let data2 = iter.next().unwrap();
-    let dist = data1.euclidean_distance(&data2);
-    println!("{:?}", data1);
-    println!("{:?}", data2);
-    println!("dist={}", dist);
+    let clusters = k_means::naive_clustering(ds, 15, 50.0);
 
-    println!("{}, {}", ds.num, ds.size);
-    println!("{:?}", ds.iter().next());
-
-    // for (i, (data, label)) in ds.iter().enumerate() {
-    //     save_image(&format!("./images/{}_{}.png", i, label), data);
-    //     if i > 10 {
-    //         break;
-    //     }
-    // }
-
-    // let k = 20;
-    // let mut initial = Vec::new();
-    // for _ in 0..k {
-    //     let mut v = vec![0; (ds.rows * ds.cols) as usize];
-    //     getrandom(&mut v).unwrap();
-    //     initial.push(v);
-    // }
-    // // for (i, data) in initial.iter().enumerate() {
-    // //     save_image(&format!("./images/initial_{}.png", i), data.as_slice());
-    // // }
-    // let dataset: Vec<Vec<u8>> = ds.iter().map(|(d, _)| d.to_vec()).collect();
-    // // let cluster = k_means::k_means_clustering(dataset[..10000].to_vec(), initial);
-    // let cluster = k_means::k_means_clustering(dataset, initial);
-
-    // println!("{:?}", &cluster[0]);
-
-    // for (i, cluster) in cluster.iter().enumerate() {
-    //     save_image(format!("cluster_{}.png", i).as_str(), cluster);
-    // }
-
-    k_means::test([[0; 10]; 11]);
-
-    let initial = Centroids::new(28 * 28, 10, vec![0; 28 * 28 * 10]);
-    let clusters = Clusters::new(ds, initial);
-
-    println!("{:?}", clusters.centroids.iter().next());
+    for (i, cluster) in clusters.iter().enumerate() {
+        let filename = format!(
+            "./images/cluster_{}_label_{}.png",
+            i,
+            cluster.label().unwrap()
+        );
+        save_image(filename.as_str(), &cluster.get_centroid());
+    }
 }
