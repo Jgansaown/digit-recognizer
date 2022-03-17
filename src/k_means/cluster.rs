@@ -75,7 +75,7 @@ impl Cluster {
     }
 
     pub fn find_label(&mut self) {
-        self.assigned.calc_value();
+        self.assigned.find_label();
     }
 
     pub fn label(&self) -> Option<u8> {
@@ -128,10 +128,13 @@ impl Assigned {
         counts
     }
 
-    fn calc_value(&mut self) {
+    /// Find the label assigned to this cluster
+    ///
+    ///
+    fn find_label(&mut self) {
         let counts = self.count_labels();
 
-        let (i, c) = counts
+        let (i, _) = counts
             .into_iter()
             .enumerate()
             .max_by(|(_, a), (_, b)| a.cmp(b))

@@ -30,8 +30,8 @@ fn save_image(filename: &str, data: &[u8]) {
 }
 
 fn main() {
-    // let (data, labels) = load_training_data();
-    let (data, labels) = load_testing_data();
+    let (data, labels) = load_training_data();
+    // let (data, labels) = load_testing_data();
 
     println!("data size = {}", data.len());
     println!("label size = {}", labels.len());
@@ -39,7 +39,7 @@ fn main() {
     let ds = mnist::Dataset::load(data, labels);
     println!("{}, {}", ds.num, ds.size);
 
-    let clusters = k_means::naive_clustering(ds, 15, 50.0);
+    let clusters = k_means::naive_clustering(ds, 15, 10.0);
 
     for (i, cluster) in clusters.iter().enumerate() {
         let filename = format!(
