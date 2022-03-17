@@ -4,7 +4,7 @@ wasm:
 serve-dev: wasm
 	python3 -m http.server -d web 8000
 
-gh-pages:
+build-pages:
 	mkdir -p www
 	wasm-pack build -d www/pkg --target web
 	rm www/pkg/.gitignore

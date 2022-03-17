@@ -25,13 +25,14 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - name: Build wasm
-      run: wasm-pack build -d www/pkg --target web
-    - name: Check files
-      run: ls -al www
-    - name: Check Git
-      run: git --version
     - name: Build gh-pages
-      run: make gh-pages
+      run: make build-pages
     - name: Push gh-pages
-      run: make push-pages
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "jason.chengyao.wang@gmail.com"
+        make push-pages
+    - name: test
+      run: |
+        cd www
+        ls -al
