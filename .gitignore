@@ -7,6 +7,7 @@
 !.gitignore
 
 # Rust
+target
 !Cargo.toml
 !Cargo.lock
 !src/*.rs
@@ -18,12 +19,13 @@
 !files/display.py
 
 # Web files
+web/pkg
 !web/favicon.ico
 !web/*.html
 !web/*.js
-www
 
 # General files
 !README.md
 !Makefile
 !.github/workflows/rust.yml
+!.github/workflows/deploy.yml
