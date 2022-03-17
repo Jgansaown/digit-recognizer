@@ -1,28 +1,28 @@
 # Ignore all
 *
+# Don't ignore directories, so we can recurse into them
+!*/
 
 # Git
 !.gitignore
-!README.md
 
 # Rust
 !Cargo.toml
 !Cargo.lock
-!src
 !src/*.rs
-!src/k_means
-!src/k_means/*.rs
-!examples
 !examples/*.rs
 
 # Datasets
-!files
 !files/dataset.json
 !files/download.py
 !files/display.py
 
 # Website files
-!www
 !www/favicon.ico
 !www/*.html
 !www/*js
+
+# General files
+!README.md
+!Makefile
+!.github/workflows/rust.yml
