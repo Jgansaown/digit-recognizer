@@ -25,18 +25,22 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - name: test
-      run: |
-        cd web
-        ls -al
-    - name: Build gh-pages
-      run: |      
-        mkdir -p www
-        wasm-pack build -d www/pkg --target web
-        rm www/pkg/.gitignore
-        cp web/* www
-    - name: Push gh-pages
+    - name: Set git configs
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "jason.chengyao.wang@gmail.com"
-        cd www; git add --all; git commit -m "deploy to gh-pages"; git push origin gh-pages;
+    - name: Build wasm
+      run: wasm-pack build -d web/pkg --target web
+    - name: Setup git work-tree for gh-pages
+      run: git worktree add www gh-pages
+    - name: Build gh-pages
+      run: |
+        mkdir -p www
+        cp -r web/* www
+        rm www/pkg/.gitignore
+    - name: Push gh-pages
+      run: |
+        cd www
+        git add --all
+        git commit -m "deploy to gh-pages"
+        git push origin gh-pages
