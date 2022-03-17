@@ -1,0 +1,12 @@
+{
+  "name": "rust-digit-recognition",
+  "version": "0.1.0",
+  "files": [
+    "rust_digit_recognition_bg.wasm",
+    "rust_digit_recognition.js",
+    "rust_digit_recognition.d.ts"
+  ],
+  "module": "rust_digit_recognition.js",
+  "types": "rust_digit_recognition.d.ts",
+  "sideEffects": false
+}
