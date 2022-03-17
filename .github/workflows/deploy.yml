@@ -12,8 +12,10 @@ jobs:
       - uses: actions/checkout@main
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      - name: build github pages
-        run: wasm-pack build -d web/pkg --target web
+      - name: build wasm
+        run: |
+          wasm-pack build -d web/pkg --target web
+          rm web/pkg/.gitignore
       - name: Deploy site to gh-pages branch
         uses: alex-page/blazing-fast-gh-pages-deploy@v1.1.0
         with:
