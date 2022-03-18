@@ -1,11 +1,18 @@
-use super::helper::slice_to_u32;
-
 pub const DATA_SIZE: usize = 28 * 28;
 pub const TRAIN_NUM: usize = 60_000;
 pub const TEST_NUM: usize = 10_000;
 
 const DATA_MAGIC_NUMBER: u32 = 2051;
 const LABEL_MAGIC_NUMBER: u32 = 2049;
+
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn load_mnist_data(data: Vec<u8>, labels: Vec<u8>) -> String {
+    let ds = Dataset::load(data, labels);
+    format!("Num: {}, Size: {}", ds.num, ds.size)
+}
+
 
 #[derive(Debug)]
 pub struct Dataset {
@@ -85,4 +92,8 @@ impl<'a> Data<'a, u8> {
             .sum::<f32>()
             .sqrt()
     }
+}
+
+fn slice_to_u32(slice: &[u8]) -> u32 {
+    u32::from_be_bytes([slice[0], slice[1], slice[2], slice[3]])
 }

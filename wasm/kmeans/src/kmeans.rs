@@ -1,7 +1,5 @@
-mod cluster;
-
-use crate::mnist::Dataset;
-use cluster::Cluster;
+use mnist::Dataset;
+use super::cluster::Cluster;
 use std::io::Write;
 
 pub fn naive_clustering(dataset: &Dataset, k: usize, min_change: f32) -> KMeansClusters {

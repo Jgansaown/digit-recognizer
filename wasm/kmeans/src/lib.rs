@@ -1,18 +1,9 @@
-pub mod helper;
-pub mod k_means;
-pub mod mnist;
+pub mod kmeans;
+mod cluster;
 
 use base64::{write::EncoderStringWriter, STANDARD};
 use std::io::{Cursor, Write};
 use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-pub fn load_mnist_data(data: Vec<u8>, labels: Vec<u8>) -> String {
-    log("Hello from Rust Wasm!");
-
-    let ds = mnist::Dataset::load(data, labels);
-    format!("Num: {}, Size: {}", ds.num, ds.size)
-}
 
 #[wasm_bindgen]
 pub fn get_nth_image(data: Vec<u8>, labels: Vec<u8>, n: usize) -> Vec<u8> {
@@ -47,20 +38,3 @@ pub fn as_png_base64_string(data: &[u8]) -> String {
 
     ret
 }
-
-// use getrandom::getrandom;
-// #[wasm_bindgen]
-// pub fn test_k_means(data: Vec<u8>, labels: Vec<u8>) {
-//     let ds = mnist::Dataset::load(data, labels).unwrap();
-
-//     let mut initial = Vec::new();
-//     for _ in 0..10 {
-//         let mut v = vec![0; (ds.rows * ds.cols) as usize];
-//         getrandom(&mut v).unwrap();
-
-//         initial.push(v);
-//     }
-//     let cluster = k_means::k_means_clustering(&ds, initial);
-
-//     log(&format!("{:?}", &cluster.assigned[..10]));
-// }

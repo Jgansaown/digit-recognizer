@@ -2,7 +2,7 @@
   import init, {
     get_nth_image,
     as_png_base64_string,
-  } from "../../pkg/rust_digit_recognition";
+  } from "@wasm/kmeans";
 
   init().then((wasm) => {
     console.log(wasm);

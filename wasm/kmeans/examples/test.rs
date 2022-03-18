@@ -1,7 +1,7 @@
 use std::fs;
 
-use rust_digit_recognition::k_means;
-use rust_digit_recognition::mnist;
+use kmeans::kmeans;
+use mnist;
 
 use image::DynamicImage;
 use image::GrayImage;
@@ -38,7 +38,7 @@ fn main() {
     let ds = mnist::Dataset::load(data, labels);
     println!("{}, {}", ds.num, ds.size);
 
-    let clusters = k_means::naive_clustering(&ds, 20, 10.0);
+    let clusters = kmeans::naive_clustering(&ds, 20, 10.0);
 
     for (i, cluster) in clusters.get_clusters().iter().enumerate() {
         let filename = format!(

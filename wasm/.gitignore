@@ -1,0 +1,4 @@
+# Overwrite parent folder's .gitignore
+!*
+
+target/

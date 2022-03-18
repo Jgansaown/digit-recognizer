@@ -1,28 +1,20 @@
 # Ignore all
 *
-# Don't ignore directories, so we can recurse into them
-!*/
+# ...except for
 
 # Git
 !.gitignore
 
-# Rust
-target
-!Cargo.toml
-!Cargo.lock
-!src/**/*.rs
-!examples/**/*.rs
+# Rust Wasm files
+!wasm
+
+# Web files
+!web
 
 # Datasets
 !files/dataset.json
 !files/download.py
 !files/display.py
-
-# Web files
-web/pkg
-!web/favicon.ico
-!web/*.html
-!web/*.js
 
 # General files
 !README.md

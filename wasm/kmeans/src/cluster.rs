@@ -1,4 +1,4 @@
-use crate::mnist::DATA_SIZE;
+use mnist::DATA_SIZE;
 
 use getrandom::getrandom;
 pub struct Cluster {
