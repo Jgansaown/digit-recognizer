@@ -6,8 +6,6 @@ use rust_digit_recognition::mnist;
 use image::DynamicImage;
 use image::GrayImage;
 
-use getrandom::getrandom;
-
 fn load_training_data() -> (Vec<u8>, Vec<u8>) {
     let data = fs::read("./files/mnist-training-data")
         .expect("Something went wrong reading the data file");
@@ -15,6 +13,7 @@ fn load_training_data() -> (Vec<u8>, Vec<u8>) {
         .expect("Something went wrong reading the label file");
     (data, labels)
 }
+
 fn load_testing_data() -> (Vec<u8>, Vec<u8>) {
     let data =
         fs::read("./files/mnist-test-data").expect("Something went wrong reading the data file");
@@ -39,9 +38,9 @@ fn main() {
     let ds = mnist::Dataset::load(data, labels);
     println!("{}, {}", ds.num, ds.size);
 
-    let clusters = k_means::naive_clustering(ds, 15, 10.0);
+    let clusters = k_means::naive_clustering(&ds, 20, 10.0);
 
-    for (i, cluster) in clusters.iter().enumerate() {
+    for (i, cluster) in clusters.get_clusters().iter().enumerate() {
         let filename = format!(
             "./images/cluster_{}_label_{}.png",
             i,
@@ -49,4 +48,6 @@ fn main() {
         );
         save_image(filename.as_str(), &cluster.get_centroid());
     }
+
+    let ret = clusters.test(&ds);
 }

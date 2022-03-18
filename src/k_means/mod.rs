@@ -4,7 +4,7 @@ use crate::mnist::Dataset;
 use cluster::Cluster;
 use std::io::Write;
 
-pub fn naive_clustering(dataset: Dataset, k: usize, min_change: f32) -> Vec<Cluster> {
+pub fn naive_clustering(dataset: &Dataset, k: usize, min_change: f32) -> KMeansClusters {
     let mut clusters = KMeansClusters::random(k);
     loop {
         // Clear cached data
@@ -42,7 +42,7 @@ pub fn naive_clustering(dataset: Dataset, k: usize, min_change: f32) -> Vec<Clus
     // Find the cluster value using the most common label in the cluster
     clusters.find_labels();
 
-    clusters.clusters
+    clusters
 }
 
 pub struct KMeansClusters {
@@ -58,6 +58,12 @@ impl KMeansClusters {
         Self {
             clusters: (0..k).into_iter().map(|_| Cluster::random()).collect(),
         }
+    }
+    pub fn save(&self) {
+        todo!();
+    }
+    pub fn load() -> Self {
+        todo!()
     }
 
     pub fn clear_cached(&mut self) {
@@ -99,6 +105,32 @@ impl KMeansClusters {
         for cluster in &mut self.clusters {
             cluster.find_label();
         }
+    }
+
+    pub fn get_clusters(&self) -> &[Cluster] {
+        &self.clusters
+    }
+
+    pub fn test(&self, dataset: &Dataset) -> f32 {
+        let correct: usize = dataset.iter().fold(0, |acc, data| {
+            let label = self.find_closest_cluster_label(data.value);
+            if label == data.label {
+                acc + 1
+            } else {
+                acc
+            }
+        });
+        let err_rate = 1.0 - (correct as f32) / (dataset.num as f32);
+        println!(
+            "Total: {}, Correct: {}, Error Rate: {}",
+            dataset.num, correct, err_rate
+        );
+        err_rate
+    }
+
+    fn find_closest_cluster_label(&self, data: &[u8]) -> u8 {
+        let i = self.find_closest_cluster(data);
+        self.clusters[i].label().unwrap()
     }
 
     fn find_closest_cluster(&self, data: &[u8]) -> usize {

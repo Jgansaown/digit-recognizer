@@ -10,8 +10,8 @@
 target
 !Cargo.toml
 !Cargo.lock
-!src/*.rs
-!examples/*.rs
+!src/**/*.rs
+!examples/**/*.rs
 
 # Datasets
 !files/dataset.json
