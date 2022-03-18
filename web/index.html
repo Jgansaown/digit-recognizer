@@ -1,26 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World - Rust</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <script type="module" src="./index.js"></script>
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rust Digit Recognition</title>
   </head>
   <body>
-    <h1>Digit Recgonition using Machine Learning and Rust!</h1>
-    
-    <p>Download MNIST data from <a href="http://yann.lecun.com/exdb/mnist/">Link</a></p>
-
-    <p>Select MNIST Training Data file</p>
-    <input id='mnist_training_data_input' type='file'></input>
-
-    <p>Select MNIST Training Label file</p>
-    <input id='mnist_training_label_input' type='file'></input>
-
-    <p>Start the training!</p>
-    <button id="start_button">Start</button>
-
-    <p>Image</p>
-    <img id="test_image" src="" />
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
+  <footer>
+    <p>This site is built using Typescript Svelte and Vite, ML powered by WASM written in Rust</p>
+  </footer>
 </html>
