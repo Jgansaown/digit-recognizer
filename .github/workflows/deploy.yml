@@ -21,8 +21,8 @@ jobs:
 
       - name: Build WASM
         run: |
-          wasm-pack build -d web/pkg --target web --release
-          rm web/pkg/.gitignore
+          make wasm
+          rm $(find ./wasm/target/wasm -name .gitignore)
 
       - name: Build site
         run: |
