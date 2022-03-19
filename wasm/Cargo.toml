@@ -2,5 +2,5 @@
 members = [
     "kmeans",
     "mnist",
-    "tar"
+    "wasm-tar"
 ]

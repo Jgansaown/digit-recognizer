@@ -559,14 +559,6 @@ dependencies = [
 
 [[package]]
 name = "tar"
-version = "0.1.0"
-dependencies = [
- "tar 0.4.38",
- "wasm-bindgen",
-]
-
-[[package]]
-name = "tar"
 version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b55807c0344e1e6c04d7c965f5289c39a8d94ae23ed5c0b57aabac549f871c6"
@@ -661,6 +653,15 @@ name = "wasm-bindgen-shared"
 version = "0.2.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d958d035c4438e28c70e4321a2911302f10135ce78a9c7834c0cab4123d06a2"
+
+[[package]]
+name = "wasm-tar"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "tar",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "weezl"
