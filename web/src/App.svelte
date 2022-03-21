@@ -1,10 +1,13 @@
 <script lang="ts">
-  import MNISTImager from './lib/MNISTImager.svelte'
+  import DisplayImage from './lib/DisplayImage.svelte';
+  import DataLoader from './lib/DataLoader.svelte';
 </script>
 
 <main>
   <h1>Digit Recognition using Machine Learning and Rust!</h1>
-  <MNISTImager />
+  <DataLoader />
+  
+  <DisplayImage />
 </main>
 
 <style>

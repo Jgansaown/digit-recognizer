@@ -1,36 +1,24 @@
 <script lang="ts">
+  import { dataset } from "./datastore";
   import init, {
     get_nth_image,
     as_png_base64_string,
-  } from "@wasm/kmeans"
+  } from "@wasm/kmeans";
   
   init().then((wasm) => {
     console.log(wasm);
   });
 
-  let data_files: FileList;
-  let label_files: FileList;
   let data: Uint8Array;
   let label: Uint8Array;
   let count: number = 0;
   let image_src: string =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAIAAAD9b0jDAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAZSURBVEhL7cExAQAAAMKg9U9tB28gAABONQlMAAEdn/sHAAAAAElFTkSuQmCC";
 
-  $: if (data_files) {
-    for (const file of data_files) {
-      file.arrayBuffer().then((v) => {
-        data = new Uint8Array(v);
-      });
-    }
-  }
-
-  $: if (label_files) {
-    for (const file of label_files) {
-      file.arrayBuffer().then((v) => {
-        label = new Uint8Array(v);
-      });
-    }
-  }
+  let unsubscribe = dataset.subscribe(value => {
+    data = value.data;
+    label = value.label;
+  });
 
   $: if (count >= 0) {
     if (data && label) {
@@ -51,15 +39,6 @@
 </script>
 
 <div>
-  <div>
-    <label for="data">Select data file:</label>
-    <input id="data" bind:files={data_files} type="file" />
-  </div>
-  <div>
-    <label for="label">Select label file:</label>
-    <input id="label" bind:files={label_files} type="file" />
-  </div>
-
   <p>Image #{count}</p>
   <div>
     <img src={image_src} alt="handwritten digit" />
@@ -70,7 +49,7 @@
 
 <style>
   img {
-    height: 10rem;
-    width: 10rem;
+    height: 5rem;
+    width: 5rem;
   }
 </style>
