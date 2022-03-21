@@ -12,9 +12,7 @@
 !web
 
 # Datasets
-!files/dataset.json
-!files/download.py
-!files/display.py
+!files
 
 # General files
 !README.md
