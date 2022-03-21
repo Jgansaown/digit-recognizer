@@ -24,7 +24,7 @@ jobs:
           cd wasm
           wasm-pack build --target web --release --scope wasm -d ../target/wasm/kmeans ./kmeans
           wasm-pack build --target web --release --scope wasm -d ../target/wasm/mnist ./mnist
-          wasm-pack build --target web --release --scope wasm -d ../target/wasm/wams-tar ./wasm-tar  
+          wasm-pack build --target web --release --scope wasm -d ../target/wasm/gz ./gz  
           rm $(find ./target/wasm -name .gitignore)
 
       - name: Build site
