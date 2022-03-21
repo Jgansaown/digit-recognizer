@@ -2,8 +2,8 @@
   import init, {
     get_nth_image,
     as_png_base64_string,
-  } from "@wasm/kmeans";
-
+  } from "@wasm/kmeans"
+  
   init().then((wasm) => {
     console.log(wasm);
   });
