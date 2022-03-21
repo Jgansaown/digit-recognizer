@@ -1,5 +1,5 @@
 [package]
-name = "wasm-tar"
+name = "gz"
 version = "0.1.0"
 edition = "2021"
 
