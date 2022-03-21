@@ -22,9 +22,9 @@ jobs:
       - name: Build WASM
         run: |
           cd wasm
-          wasm-pack build --target web --release --scope wasm -d ../target/wasm/kmeans ./kmeans
-          wasm-pack build --target web --release --scope wasm -d ../target/wasm/mnist ./mnist
-          wasm-pack build --target web --release --scope wasm -d ../target/wasm/gz ./gz  
+          wasm-pack build --target web --release --scope wasm -d ../target/pkg/kmeans ./kmeans
+          wasm-pack build --target web --release --scope wasm -d ../target/pkg/mnist ./mnist
+          wasm-pack build --target web --release --scope wasm -d ../target/pkg/gz ./gz  
           rm $(find ./target/wasm -name .gitignore)
 
       - name: Build site

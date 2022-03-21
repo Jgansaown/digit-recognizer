@@ -20,8 +20,8 @@
     "vite": "^2.8.0"
   },
   "dependencies": {
-    "@wasm/kmeans": "file:../wasm/target/wasm/kmeans",
-    "@wasm/mnist": "file:../wasm/target/wasm/mnist",
-    "@wasm/gz": "file:../wasm/target/wasm/gz"
+    "@wasm/kmeans": "file:../wasm/target/pkg/kmeans",
+    "@wasm/mnist": "file:../wasm/target/pkg/mnist",
+    "@wasm/gz": "file:../wasm/target/pkg/gz"
   }
 }
