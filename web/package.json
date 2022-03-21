@@ -22,6 +22,6 @@
   "dependencies": {
     "@wasm/kmeans": "file:../wasm/target/wasm/kmeans",
     "@wasm/mnist": "file:../wasm/target/wasm/mnist",
-    "@wasm/tar": "file:../wasm/target/wasm/tar"
+    "@wasm/gz": "file:../wasm/target/wasm/gz"
   }
 }
