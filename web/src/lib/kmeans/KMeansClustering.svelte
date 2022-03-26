@@ -66,9 +66,14 @@
     ];
     await new Promise((r) => setTimeout(r, 100));
 
+    let iter_count = 0;
     while (true) {
       step_kmeans();
-      if (diff < 100.0) {
+      iter_count += 1;
+      if (diff < min_change) {
+        break;
+      }
+      if (iter_count > max_iter) {
         break;
       }
       await new Promise((r) => setTimeout(r, 100));
@@ -121,7 +126,7 @@
     {#each cluster_info as info, i}
       <div style="margin: auto;">
         <img src={info.img} alt="" />
-        <p>{info.label}</p>
+        <p>{info.label}: {info.num_of_data}</p>
       </div>
     {/each}
   </div>
