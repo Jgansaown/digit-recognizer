@@ -1,6 +1,6 @@
 # Handwritten Digit Recognition using Machine Learning
 
-[![Rust](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml) [![Github Pages site](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml)
+[![Rust](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml) [![Github Pages Deploy](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml)
 
 ## Project Site
 

@@ -17,5 +17,9 @@
 # General files
 !README.md
 !Makefile
+
+# Github Action
+!.github
+!.github/workflows
 !.github/workflows/rust.yml
 !.github/workflows/deploy.yml
