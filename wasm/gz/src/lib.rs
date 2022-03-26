@@ -1,6 +1,6 @@
+use flate2::read::GzDecoder;
 use std::io::Read;
 use wasm_bindgen::prelude::*;
-use flate2::read::GzDecoder;
 
 #[wasm_bindgen]
 pub fn decode_gz(gzfile: &[u8]) -> Vec<u8> {

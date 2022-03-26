@@ -1,6 +1,7 @@
-use mnist::Dataset;
 use super::cluster::Cluster;
+use mnist::Dataset;
 use std::io::Write;
+use wasm_bindgen::prelude::*;
 
 pub fn naive_clustering(dataset: &Dataset, k: usize, min_change: f32) -> KMeansClusters {
     let mut clusters = KMeansClusters::random(k);
@@ -20,9 +21,6 @@ pub fn naive_clustering(dataset: &Dataset, k: usize, min_change: f32) -> KMeansC
         }
         println!("");
 
-        // Dropping centroids with no match
-        clusters.drop_no_match_clusters();
-
         // (2) Recalculate the centroid of each clusters
         println!("Recalculating the centroids...");
         let diff = clusters.recalculate_centroids();
@@ -37,12 +35,10 @@ pub fn naive_clustering(dataset: &Dataset, k: usize, min_change: f32) -> KMeansC
         }
     }
 
-    // Find the cluster value using the most common label in the cluster
-    clusters.find_labels();
-
     clusters
 }
 
+#[wasm_bindgen]
 pub struct KMeansClusters {
     clusters: Vec<Cluster>,
 }
@@ -66,28 +62,13 @@ impl KMeansClusters {
 
     pub fn clear_cached(&mut self) {
         for cluster in &mut self.clusters {
-            cluster.clear_assigned();
+            cluster.clear_cache();
         }
     }
 
     pub fn assign_to_cluster(&mut self, index: usize, data: &[u8], label: u8) {
         let id = self.find_closest_cluster(data);
-        self.clusters[id].add_data_to_assigned(index, data, label);
-    }
-
-    pub fn drop_no_match_clusters(&mut self) {
-        let ids: Vec<usize> = self
-            .clusters
-            .iter()
-            .enumerate()
-            .filter_map(|(i, cluster)| match cluster.num() {
-                0 => Some(i),
-                _ => None,
-            })
-            .collect();
-        for id in ids.into_iter().rev() {
-            self.clusters.swap_remove(id);
-        }
+        self.clusters[id].add_data(index, data, label);
     }
 
     pub fn recalculate_centroids(&mut self) -> f32 {
@@ -99,19 +80,15 @@ impl KMeansClusters {
         sums / (self.clusters.len() as f32)
     }
 
-    pub fn find_labels(&mut self) {
-        for cluster in &mut self.clusters {
-            cluster.find_label();
-        }
-    }
-
     pub fn get_clusters(&self) -> &[Cluster] {
         &self.clusters
     }
 
+    /// 
     pub fn test(&self, dataset: &Dataset) -> f32 {
         let correct: usize = dataset.iter().fold(0, |acc, data| {
-            let label = self.find_closest_cluster_label(data.value);
+            let i = self.find_closest_cluster(data.value);
+            let label = self.clusters[i].label.unwrap();
             if label == data.label {
                 acc + 1
             } else {
@@ -125,12 +102,8 @@ impl KMeansClusters {
         );
         err_rate
     }
-
-    fn find_closest_cluster_label(&self, data: &[u8]) -> u8 {
-        let i = self.find_closest_cluster(data);
-        self.clusters[i].label().unwrap()
-    }
-
+    
+    /// 
     fn find_closest_cluster(&self, data: &[u8]) -> usize {
         self.clusters
             .iter()

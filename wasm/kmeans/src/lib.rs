@@ -1,40 +1,55 @@
-pub mod kmeans;
 mod cluster;
+pub mod kmeans;
 
-use base64::{write::EncoderStringWriter, STANDARD};
-use std::io::{Cursor, Write};
+use mnist::Dataset;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+/// 
 #[wasm_bindgen]
-pub fn get_nth_image(data: Vec<u8>, labels: Vec<u8>, n: usize) -> Vec<u8> {
-    let ds = mnist::Dataset::load(data, labels);
-    ds.iter().nth(n).unwrap().value.to_vec()
+pub fn kmeans_new_clusters_random(k: usize) -> kmeans::KMeansClusters {
+    kmeans::KMeansClusters::random(k)
 }
 
+/// Iterates through dataset and assign data to closest cluster
+///
 #[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
+pub fn kmeans_assign_dataset_to_clusters(dataset: &Dataset, clusters: &mut kmeans::KMeansClusters) {
+    clusters.clear_cached();
+    for (i, data) in dataset.iter().enumerate() {
+        clusters.assign_to_cluster(i, data.value, data.label);
+    }
 }
 
+/// Recalculates centroid position
+///
 #[wasm_bindgen]
-pub fn as_png_base64_string(data: &[u8]) -> String {
-    let mut ret = String::from("data:image/png;base64,");
-    let mut writer = Cursor::new(Vec::new());
+pub fn kmeans_recalculate_centroids(clusters: &mut kmeans::KMeansClusters) -> f32 {
+    clusters.recalculate_centroids()
+}
 
-    image::write_buffer_with_format(
-        &mut writer,
-        data,
-        28,
-        28,
-        image::ColorType::L8,
-        image::ImageOutputFormat::Png,
-    )
-    .unwrap();
+/// 
+#[wasm_bindgen]
+pub fn kmeans_get_clusters_info(clusters: &kmeans::KMeansClusters) -> Vec<JsValue> {
+    clusters
+        .get_clusters()
+        .iter()
+        .map(|c| JsValue::from_serde(&ClusterInfo::from_cluster(c)).unwrap())
+        .collect()
+}
 
-    let mut enc = EncoderStringWriter::from(&mut ret, STANDARD);
-    enc.write_all(writer.get_ref()).unwrap();
-    let _ = enc.into_inner();
-
-    ret
+#[derive(Serialize, Deserialize)]
+pub struct ClusterInfo {
+    img: String,
+    label: Option<u8>,
+    num_of_data: Option<usize>,
+}
+impl ClusterInfo {
+    pub fn from_cluster(cluster: &cluster::Cluster) -> ClusterInfo {
+        ClusterInfo {
+            img: mnist::data_as_png_base64_string(&cluster.centroid),
+            label: cluster.label,
+            num_of_data: cluster.num,
+        }
+    }
 }

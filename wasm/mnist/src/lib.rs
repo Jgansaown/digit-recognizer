@@ -1,19 +1,60 @@
+use base64::{write::EncoderStringWriter, STANDARD};
+use std::io::{Cursor, Write};
+use wasm_bindgen::prelude::*;
+
 pub const DATA_SIZE: usize = 28 * 28;
+pub const DATA_TYPES: usize = 10;
 pub const TRAIN_NUM: usize = 60_000;
 pub const TEST_NUM: usize = 10_000;
 
 const DATA_MAGIC_NUMBER: u32 = 2051;
 const LABEL_MAGIC_NUMBER: u32 = 2049;
 
-use wasm_bindgen::prelude::*;
+const BLACK_IMG: &'static str = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAIAAAD9b0jDAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAZSURBVEhL7cExAQAAAMKg9U9tB28gAABONQlMAAEdn/sHAAAAAElFTkSuQmCC";
 
 #[wasm_bindgen]
-pub fn load_mnist_data(data: Vec<u8>, labels: Vec<u8>) -> String {
-    let ds = Dataset::load(data, labels);
-    format!("Num: {}, Size: {}", ds.num, ds.size)
+pub fn init_panic_hook() {
+    console_error_panic_hook::set_once();
 }
 
+#[wasm_bindgen]
+pub fn load_mnist_data(data: Vec<u8>, labels: Vec<u8>) -> Dataset {
+    Dataset::load(data, labels)
+}
 
+#[wasm_bindgen]
+pub fn get_nth_image(dataset: &Dataset, n: usize) -> Vec<u8> {
+    dataset.iter().nth(n).unwrap().value.to_vec()
+}
+
+#[wasm_bindgen]
+pub fn data_as_png_base64_string(data: &[u8]) -> String {
+    let mut ret = String::from("data:image/png;base64,");
+    let mut writer = Cursor::new(Vec::new());
+
+    image::write_buffer_with_format(
+        &mut writer,
+        data,
+        28,
+        28,
+        image::ColorType::L8,
+        image::ImageOutputFormat::Png,
+    )
+    .unwrap();
+
+    let mut enc = EncoderStringWriter::from(&mut ret, STANDARD);
+    enc.write_all(writer.get_ref()).unwrap();
+    let _ = enc.into_inner();
+
+    ret
+}
+
+#[wasm_bindgen]
+pub fn get_black_image() -> String {
+    BLACK_IMG.to_string()
+}
+
+#[wasm_bindgen]
 #[derive(Debug)]
 pub struct Dataset {
     /// Number of Data

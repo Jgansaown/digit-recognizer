@@ -9,10 +9,10 @@ edition = "2021"
 crate-type = ["rlib", "cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = { version="0.2", features = ["serde-serialize"] }
 getrandom = { version="0.2", features = ["js"] }
-image = "0.24"
-base64 = "0.13"
 mnist = { path = "../mnist" }
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
+image = "0.24"

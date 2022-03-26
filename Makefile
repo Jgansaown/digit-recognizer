@@ -2,7 +2,7 @@
 .PHONY: wasm web
 
 wasm:
-	cd wasm; make all
+	cd wasm; $(MAKE) all
 
 web: wasm
 	cd web; npm install; npm run build
