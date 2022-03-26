@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@wasm/kmeans": "file:../wasm/target/pkg/kmeans",
-    "@wasm/mnist": "file:../wasm/target/pkg/mnist",
     "@wasm/gz": "file:../wasm/target/pkg/gz"
   }
 }
