@@ -323,8 +323,9 @@ name = "kmeans"
 version = "0.1.0"
 dependencies = [
  "getrandom",
- "image",
+ "gz",
  "mnist",
+ "rayon",
  "serde",
  "wasm-bindgen",
 ]

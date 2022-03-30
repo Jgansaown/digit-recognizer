@@ -6,13 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-crate-type = ["rlib", "cdylib"]
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
-wasm-bindgen = { version="0.2", features = ["serde-serialize"] }
-getrandom = { version="0.2", features = ["js"] }
 mnist = { path = "../mnist" }
+wasm-bindgen = { version="0.2", features = ["serde-serialize"] }
+rayon = { version="1.5", optional=true }
+getrandom = { version="0.2", features = ["js"] }
 serde = { version = "1.0", features = ["derive"] }
 
+[features]
+multithread = ["rayon"]
+
 [dev-dependencies]
-image = "0.24"
+gz = { path = "../gz" }

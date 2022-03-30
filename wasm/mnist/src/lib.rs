@@ -1,5 +1,8 @@
 use base64::{write::EncoderStringWriter, STANDARD};
+use image::DynamicImage;
+use image::GrayImage;
 use std::io::{Cursor, Write};
+use std::path::Path;
 use wasm_bindgen::prelude::*;
 
 pub const DATA_SIZE: usize = 28 * 28;
@@ -52,6 +55,12 @@ pub fn data_as_png_base64_string(data: &[u8]) -> String {
 #[wasm_bindgen]
 pub fn get_black_image() -> String {
     BLACK_IMG.to_string()
+}
+
+pub fn save_as_image<P: AsRef<Path>>(path: P, data: &[u8]) {
+    let gray = GrayImage::from_raw(28, 28, data.to_vec()).unwrap();
+    let img = DynamicImage::ImageLuma8(gray);
+    img.save(path).unwrap();
 }
 
 #[wasm_bindgen]
