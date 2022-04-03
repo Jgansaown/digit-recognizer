@@ -1,6 +1,0 @@
-{
-    "training-data": "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-training-data.gz",
-    "training-label": "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-training-label.gz",
-    "testing-data": "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-test-data.gz",
-    "testing-label": "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-test-label.gz"
-}

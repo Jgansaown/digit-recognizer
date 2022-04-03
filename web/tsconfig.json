@@ -16,5 +16,6 @@
     "checkJs": true
   },
   "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "exclude": ["src/**/*.worker.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

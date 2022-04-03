@@ -1,163 +1,76 @@
 <script lang="ts">
-  // UI
-  import { afterUpdate, onDestroy, onMount } from "svelte";
-  // Rust Wasm
-  import {
-    load_mnist_data,
-    kmeans_new_clusters_random,
-    kmeans_assign_dataset_to_clusters,
-    kmeans_recalculate_centroids,
-    kmeans_get_clusters_info,
-  } from "@wasm/kmeans";
-  // Types
-  import type { KMeansClusters, Dataset } from "@wasm/kmeans";
-  import type { jsDataset } from "../common/fetch_dataset";
+    // UI
+    import { afterUpdate, onDestroy, onMount } from "svelte";
+    import DisplayTraining from "./DisplayTraining.svelte";
+    import Settings from "./Settings.svelte";
+    // Rust Wasm
+    import { Kmeans } from "../common/load_worker";
+    import { get_black_image } from "@wasm/kmeans";
+    // Types
+    import type { jsDataset } from "../common/mnist.dataset";
+    import type { ClusterInfo } from "./cluster";
 
-  interface ClusterInfo {
-    img: string;
-    label?: number;
-    num_of_data?: number;
-  }
+    export let js_dataset: jsDataset;
 
-  export let js_dataset: jsDataset;
+    const kmeans = new Kmeans();
 
-  let dataset: Dataset;
-  let clusters: KMeansClusters;
+    let num_k = 10;
+    let min_change = 100.0;
+    let max_iter = 10;
 
-  let num_k = 10;
-  let min_change = 100.0;
-  let max_iter = 10;
+    let diff: number = 0.0;
+    let display_clusters: ClusterInfo[][] = [];
+    let iter_count: number = 0;
 
-  let diff: number = 0.0;
-  let display_clusters: ClusterInfo[][] = [];
+    onMount(async () => {});
+    onDestroy(async () => {
+        await kmeans.free();
+    });
 
-  $: console.log(display_clusters);
-  $: console.log(diff);
-
-  onMount(async () => {
-    dataset = load_mnist_data(js_dataset.data, js_dataset.label);
-  });
-  onDestroy(() => {
-    if (dataset != undefined) {
-      dataset.free();
+    $: if (num_k && iter_count == 0) {
+        console.log(display_clusters);
     }
-    if (clusters != undefined) {
-      clusters.free();
+    $: if (num_k && iter_count == 0) {
+        display_clusters = [[]];
+        for (let i = 0; i < num_k; i++) {
+            display_clusters[0].push({
+                img: get_black_image(),
+                label: 0,
+                num_of_data: 0,
+            });
+        }
     }
-  });
 
-  function step_kmeans(): number {
-    if (clusters == undefined) { return; }
-    kmeans_assign_dataset_to_clusters(dataset, clusters);
-    diff = kmeans_recalculate_centroids(clusters);
-    display_clusters = [
-      ...display_clusters,
-      kmeans_get_clusters_info(clusters),
-    ];
-    return diff;
-  }
-
-  async function start_kmeans(k: number) {
-    reset_kmeans();
-    clusters = kmeans_new_clusters_random(k);
-    display_clusters = [
-      ...display_clusters,
-      kmeans_get_clusters_info(clusters),
-    ];
-    await new Promise((r) => setTimeout(r, 100));
-
-    let iter_count = 0;
-    while (true) {
-      step_kmeans();
-      iter_count += 1;
-      if (diff < min_change) {
-        break;
-      }
-      if (iter_count > max_iter) {
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 100));
+    async function start_training(k: number) {
+        await kmeans.init(k, js_dataset.data, js_dataset.label);
+        display_clusters = [await kmeans.info()];
+        iter_count = 1;
+        while (true) {
+            diff = await kmeans.step();
+            display_clusters = [...display_clusters, await kmeans.info()];
+            iter_count += 1;
+            if (diff < min_change || iter_count > max_iter) {
+                break;
+            }
+        }
     }
-  }
 
-  function reset_kmeans() {
-    display_clusters = [];
-  }
+    function reset_kmeans() {
+        display_clusters = [];
+        iter_count = 0;
+    }
 </script>
 
-<h2>K Means Clustering</h2>
+<h2>K-Means Clustering</h2>
 
-<div id="settings">
-  <h3>Settings</h3>
-  <p>Initial Condition</p>
-  <label>
-    Number of clusters (K):
-    <input type="number" bind:value={num_k} min="0" max="50" step="1" />
-  </label>
-  <!-- <p>Initial Clusters:</p>
-  <label>
-    <input type="radio" />
-    Random
-  </label>
-  <label>
-    <input type="radio" />
-    K Means ++
-  </label> -->
+<h3>Settings</h3>
+<Settings bind:num_k bind:min_change bind:max_iter />
 
-  <p>Stop condition</p>
-  <label>
-    Minimum change in centroid:
-    <input type="number" bind:value={min_change} min="0" step="0.01" />
-  </label>
-  <label>
-    Max iterations:
-    <input type="number" bind:value={max_iter} min="0" step="1" />
-  </label>
-</div>
-
-<button on:click={() => start_kmeans(num_k)}>Start</button>
-<button on:click={() => step_kmeans()}>Step</button>
+<button on:click={() => start_training(num_k)}>Start Training</button>
 <button on:click={() => reset_kmeans()}>Reset</button>
 
-<p>Clusters</p>
+<h3>Training</h3>
+<DisplayTraining clusters={display_clusters} />
 
-{#each display_clusters as cluster_info}
-  <div style="display: flex">
-    {#each cluster_info as info, i}
-      <div style="margin: auto;">
-        <img src={info.img} alt="" />
-        <p>{info.label}: {info.num_of_data}</p>
-      </div>
-    {/each}
-  </div>
-{/each}
-
-<!-- {#if info != undefined}
-<div  style="display: flex">
-  {#each info as {img, label, num_of_data}, i}
-  <div style="margin: auto">
-    <img src={img} alt="alt" />
-    <p>{i}: {label}</p>
-  </div>
-  {/each}
-</div>
-{/if} -->
 <style>
-  img {
-    height: 5em;
-    width: 5em;
-  }
-
-  label {
-    display: block;
-  }
-
-  #settings {
-    width: 50%;
-    margin: auto;
-    border: 1px solid black;
-  }
-  #settings label {
-    text-align: right;
-  }
 </style>

@@ -20,7 +20,7 @@
     "vite": "^2.8.0"
   },
   "dependencies": {
-    "@wasm/kmeans": "file:../wasm/target/pkg/kmeans",
-    "@wasm/gz": "file:../wasm/target/pkg/gz"
+    "@wasm/gz": "file:../wasm/target/pkg/gz",
+    "@wasm/kmeans": "file:../wasm/target/pkg/kmeans"
   }
 }
