@@ -1,9 +1,11 @@
-# Handwritten Digit Recognition using Machine Learning
+# Digit Recognition using Machine Learning and Rust
 
 [![Rust](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml) [![Github Pages Deploy](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml)
 
-## Project Site
+## Demo Site
 
-Go to [https://jgansaown.github.io/rust-digit-recognition/](https://jgansaown.github.io/rust-digit-recognition/) to see it in action!
+Go to the [demo site](https://jgansaown.github.io/rust-digit-recognition) hosted statically on Github Pages  to see it in action!
 
-<!-- Run `files/download.py` to download all the testing and training data -->
+## Description
+
+Using Rust to implement various machine learning algorithms, compiled into WebAssembly. Which is then consumed by Svelte frontend to execute machine learning training and testing completely on client side.

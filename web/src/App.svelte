@@ -9,17 +9,6 @@
     import load_mnist_dataset from "./lib/common/mnist.dataset";
     import type { jsDataset } from "./lib/common/mnist.dataset";
 
-    // import { get_prime_list } from "./lib/common/load_worker";
-    // let k = 1_000_000;
-    // let dur = 0;
-    // let prime_list = [];
-
-    // async function test_func() {
-    //     const ret = await get_prime_list(k);
-    //     prime_list = ret.list;
-    //     dur = ret.dur;
-    // }
-
     let training_dataset: jsDataset = undefined;
     let testing_dataset: jsDataset = undefined;
 
@@ -37,20 +26,12 @@
 
     onDestroy(() => {});
 </script>
-<!-- 
-<div>
-    <p>Number of Prime Numbers from 1 to {k}: {prime_list.length}</p>
-    <p>Last 10 Prime Numbers: {prime_list.slice(-10).join(", ")}</p>
-    <label>K: <input type="number" bind:value={k} /></label>
-    <button on:click={test_func}>Calculate</button>
-    <p style="display: inline;">Duration: {dur} ms</p>
-</div> -->
 
 <main>
     <h1>Recognizing Handwritten Digits using Machine Learning!</h1>
 
-    <div>
-        <p>Select Machine Learning Algorithm:</p>
+    <p>Select Machine Learning Algorithm:</p>
+    <div id="algro_select">
         <label>
             <input type="radio" bind:group={ml_algro} value={"kmc"} />
             K-Means Clustering
@@ -121,9 +102,23 @@
         max-width: 14rem;
     }
 
+    #algro_select {
+        display: flex;
+        flex-flow: column wrap;
+        justify-content: flex-start;
+        align-content: space-around;
+        align-items: flex-start;
+    }
+
     @media (min-width: 480px) {
         h1 {
             max-width: none;
+        }
+
+        #algro_select {
+            flex-flow: row wrap;
+            justify-content: center;
+            gap: 0px 1em;
         }
     }
 </style>

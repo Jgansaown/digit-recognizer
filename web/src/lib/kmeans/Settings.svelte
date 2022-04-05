@@ -12,7 +12,7 @@
         <label for="k_range">{num_k}</label>
         <input id="k_range" type="range" bind:value={num_k} min="0" max="100" />
 
-        <label for="choice">Choose Initial Centroids</label>
+        <label for="choice">Choosing Initial Centroids</label>
         <div id="choice" style="display: flex;">
             <label>
                 <input type="radio" bind:group={init_choice} value={"random"} />
@@ -20,10 +20,10 @@
             </label>
             <label>
                 <input
-                    type="radio"
-                    bind:group={init_choice}
-                    value={"k-means++"}
-                    disabled={true}
+                type="radio"
+                bind:group={init_choice}
+                value={"k-means++"}
+                disabled={true}
                 />
                 K-Means++
             </label>

@@ -1,25 +1,9 @@
-import PrimeWorker from "./workers/prime.worker?worker&inline";
 import GzWorker from "./workers/gz.worker?worker";
 import KMeansWorker from "./workers/kmeans.worker?worker";
 import { Command, CommandDto } from "./workers/kmeans.dto";
 import type { MnistDataset } from "./mnist.dataset";
 
-const PRIME_WORKER = new PrimeWorker();
 const GZ_WORKER = new GzWorker();
-
-export async function get_prime_list(
-  k: number
-): Promise<{ list: number[]; dur: number }> {
-  const promise: Promise<{ list: number[]; dur: number }> = new Promise(
-    (resolve, reject) => {
-      PRIME_WORKER.postMessage(k);
-      PRIME_WORKER.onmessage = (
-        msg: MessageEvent<{ list: number[]; dur: number }>
-      ) => resolve(msg.data);
-    }
-  );
-  return promise;
-}
 
 export function decode_mnist_gz(files: MnistDataset): Promise<MnistDataset> {
   return new Promise((res, rej) => {

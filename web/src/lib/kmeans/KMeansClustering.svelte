@@ -41,11 +41,13 @@
         }
     }
 
+    let is_running: boolean = false;
     async function start_training(k: number) {
         await kmeans.init(k, js_dataset.data, js_dataset.label);
         display_clusters = [await kmeans.info()];
         iter_count = 1;
-        while (true) {
+        is_running = true;
+        while (is_running) {
             diff = await kmeans.step();
             display_clusters = [...display_clusters, await kmeans.info()];
             iter_count += 1;
@@ -53,24 +55,30 @@
                 break;
             }
         }
+        is_running = false;
     }
 
     function reset_kmeans() {
         display_clusters = [];
         iter_count = 0;
+        is_running = false;
     }
 </script>
 
+<p>is running: {is_running}</p>
+
 <h2>K-Means Clustering</h2>
 
-<h3>Settings</h3>
+<h3>Training Settings</h3>
 <Settings bind:num_k bind:min_change bind:max_iter />
 
 <button on:click={() => start_training(num_k)}>Start Training</button>
 <button on:click={() => reset_kmeans()}>Reset</button>
 
-<h3>Training</h3>
-<DisplayTraining clusters={display_clusters} />
+<DisplayTraining clusters={display_clusters}/>
 
 <style>
+    h3 {
+        margin: 0px;
+    }
 </style>
