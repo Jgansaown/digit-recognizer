@@ -28,9 +28,6 @@
     });
 
     $: if (num_k && iter_count == 0) {
-        console.log(display_clusters);
-    }
-    $: if (num_k && iter_count == 0) {
         display_clusters = [[]];
         for (let i = 0; i < num_k; i++) {
             display_clusters[0].push({
@@ -65,7 +62,6 @@
     }
 </script>
 
-<p>is running: {is_running}</p>
 
 <h2>K-Means Clustering</h2>
 
