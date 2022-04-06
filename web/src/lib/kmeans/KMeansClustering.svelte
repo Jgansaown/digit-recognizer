@@ -3,6 +3,7 @@
     import { afterUpdate, onDestroy, onMount } from "svelte";
     import DisplayTraining from "./DisplayTraining.svelte";
     import Settings from "./Settings.svelte";
+    import Canvas from "./Canvas.svelte";
     // Rust Wasm
     import { Kmeans } from "../common/load_worker";
     import { get_black_image } from "@wasm/kmeans";
@@ -72,6 +73,9 @@
 <button on:click={() => reset_kmeans()}>Reset</button>
 
 <DisplayTraining clusters={display_clusters}/>
+
+<h3>Testing</h3>
+<Canvas></Canvas>
 
 <style>
     h3 {
