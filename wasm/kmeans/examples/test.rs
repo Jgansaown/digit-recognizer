@@ -56,7 +56,7 @@ fn main() {
     };
 
     // Train clusters
-    let clusters = kmeans_naive_clustering(&training, 20, 50.0);
+    let clusters = kmeans_naive_clustering(&training, 50, 50.0);
 
     // Save clusters
     {
@@ -75,5 +75,11 @@ fn main() {
     println!("Training error rate: {}", err);
 
     let err = clusters.test(&testing);
+
+    for data in testing.iter() {
+        let labels = clusters.test_data(data.value);
+        println!("actual: {}, labels: {:?}", data.label, labels);
+        break;
+    }
     println!("Testing error rate: {}", err);
 }

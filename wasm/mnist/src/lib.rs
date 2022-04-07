@@ -1,6 +1,5 @@
 use base64::{write::EncoderStringWriter, STANDARD};
-use image::DynamicImage;
-use image::GrayImage;
+use image::{DynamicImage, GrayImage, RgbaImage};
 use std::io::{Cursor, Write};
 use std::path::Path;
 use wasm_bindgen::prelude::*;
@@ -50,6 +49,13 @@ pub fn data_as_png_base64_string(data: &[u8]) -> String {
     let _ = enc.into_inner();
 
     ret
+}
+
+#[wasm_bindgen]
+pub fn rgba_image_to_grayscale_image(width: u32, height: u32, buf: &[u8]) -> Vec<u8> {
+    let rgba = RgbaImage::from_raw(width, height, buf.to_vec()).unwrap();
+    let gray = DynamicImage::ImageRgba8(rgba).into_luma8();
+    gray.into_vec()
 }
 
 #[wasm_bindgen]

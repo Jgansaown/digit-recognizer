@@ -44,6 +44,15 @@ impl KMeansClusters {
             .map(|c| JsValue::from_serde(&ClusterInfo::from_cluster(c)).unwrap())
             .collect()
     }
+
+    pub fn test_rgba_image(&self, rgba: Vec<u8>) -> u8 {
+        let data = mnist::rgba_image_to_grayscale_image(28, 28, &rgba);
+        let labels = self.test_data(&data);
+        match labels.first() {
+            Some(&(i, _)) => i,
+            None => 255,
+        }
+    }
 }
 #[cfg(feature = "multithread")]
 impl KMeansClusters {
@@ -65,6 +74,19 @@ impl KMeansClusters {
     ///
     pub fn get_clusters(&self) -> &[Cluster] {
         &self.inner
+    }
+    ///
+    pub fn test_data(&self, data: &[u8]) -> Vec<(u8, f32)> {
+        let mut labeled: Vec<(u8, f32)> = self
+            .inner
+            .iter()
+            .filter_map(|c| match c.label {
+                Some(label) => Some((label, c.euclidean_distance(data))),
+                None => None,
+            })
+            .collect();
+        labeled.sort_by(|(_, a), (_, b)| a.partial_cmp(b).expect("error comparing floats"));
+        labeled
     }
     ///
     pub fn test(&self, dataset: &Dataset) -> f32 {

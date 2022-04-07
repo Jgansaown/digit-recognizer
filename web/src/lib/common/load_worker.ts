@@ -32,6 +32,8 @@ export class Kmeans {
         break;
       case Command.info:
         this.cbs[msg.data.command].forEach((f) => f(msg.data.info));
+      case Command.test_one:
+        this.cbs[msg.data.command].forEach((f) => f(msg.data.label));
       default:
         break;
     }
@@ -70,5 +72,12 @@ export class Kmeans {
     return await this.send_message({
       command: Command.free,
     });
+  }
+
+  async test_one_rgba(rgba: Uint8Array): Promise<number> {
+    return await this.send_message({
+      command: Command.test_one,
+      image: rgba,
+    })
   }
 }

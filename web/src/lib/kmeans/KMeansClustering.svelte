@@ -23,6 +23,8 @@
     let display_clusters: ClusterInfo[][] = [];
     let iter_count: number = 0;
 
+    let canvas_imagedata: ImageData;
+
     onMount(async () => {});
     onDestroy(async () => {
         await kmeans.free();
@@ -37,6 +39,18 @@
                 num_of_data: 0,
             });
         }
+    }
+
+    $: if (canvas_imagedata) {
+        const new_img = Uint8Array.from(canvas_imagedata.data);
+        console.log(canvas_imagedata.data);
+        console.log(new_img);
+        
+        kmeans
+            .test_one_rgba(new_img)
+            .then((label) => {
+                console.log(label);
+            });
     }
 
     let is_running: boolean = false;
@@ -63,7 +77,6 @@
     }
 </script>
 
-
 <h2>K-Means Clustering</h2>
 
 <h3>Training Settings</h3>
@@ -72,10 +85,10 @@
 <button on:click={() => start_training(num_k)}>Start Training</button>
 <button on:click={() => reset_kmeans()}>Reset</button>
 
-<DisplayTraining clusters={display_clusters}/>
+<DisplayTraining clusters={display_clusters} />
 
 <h3>Testing</h3>
-<Canvas></Canvas>
+<Canvas bind:imagedata={canvas_imagedata} />
 
 <style>
     h3 {
