@@ -18,6 +18,11 @@
 
         console.log(canvas.width, canvas.height);
         console.log(canvas.clientHeight, canvas.clientWidth);
+
+        canvas.addEventListener('touchstart', () => {}, false);
+        canvas.addEventListener('touchend', () => {}, false);
+        canvas.addEventListener('touchmove', () => {}, false);
+
     });
     function mousedown(e: MouseEvent) {
         is_down = true;
@@ -55,6 +60,7 @@
         on:mousedown={mousedown}
         on:mousemove={mousemove}
         on:mouseup={mouseup}
+        on:focus={() => {}}
     />
     <button
         on:click={() => {

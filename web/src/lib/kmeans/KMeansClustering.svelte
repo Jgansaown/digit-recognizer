@@ -5,7 +5,7 @@
     import Settings from "./Settings.svelte";
     import Canvas from "./Canvas.svelte";
     // Rust Wasm
-    import { Kmeans } from "../common/load_worker";
+    import { Kmeans } from "./worker/load";
     import { get_black_image } from "@wasm/kmeans";
     // Types
     import type { jsDataset } from "../common/mnist.dataset";
@@ -25,7 +25,10 @@
 
     let canvas_imagedata: ImageData;
 
-    onMount(async () => {});
+    onMount(async () => {
+        await kmeans.init();
+        await kmeans.load_dataset(js_dataset.data, js_dataset.label);
+    });
     onDestroy(async () => {
         await kmeans.free();
     });
@@ -55,7 +58,7 @@
 
     let is_running: boolean = false;
     async function start_training(k: number) {
-        await kmeans.init(k, js_dataset.data, js_dataset.label);
+        await kmeans.new(k);
         display_clusters = [await kmeans.info()];
         iter_count = 1;
         is_running = true;
@@ -79,19 +82,41 @@
 
 <h2>K-Means Clustering</h2>
 
-<h3>Training Settings</h3>
-<Settings bind:num_k bind:min_change bind:max_iter />
+<h3>Training</h3>
+<div class="content">
+    <div>
 
-<button on:click={() => start_training(num_k)}>Start Training</button>
-<button on:click={() => reset_kmeans()}>Reset</button>
-
-<DisplayTraining clusters={display_clusters} />
+        <Settings bind:num_k bind:min_change bind:max_iter />
+        
+        <button on:click={() => start_training(num_k)}>Start Training</button>
+        <button on:click={() => reset_kmeans()}>Reset</button>
+    </div>
+    <div>
+        <DisplayTraining clusters={display_clusters} />
+    </div>
+</div>
 
 <h3>Testing</h3>
-<Canvas bind:imagedata={canvas_imagedata} />
+<div class="content">
+    <div>
+
+        <p>asd</p>
+        
+        <button>Start Testing</button>
+    </div>
+    
+    <div>
+        <Canvas bind:imagedata={canvas_imagedata} />
+    </div>
+</div>
 
 <style>
     h3 {
-        margin: 0px;
+        /* margin: 0px; */
+    }
+
+    .content {
+        display: flex;
+        flex-flow: column nowrap;
     }
 </style>

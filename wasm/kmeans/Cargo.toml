@@ -11,9 +11,9 @@ crate-type = ["lib", "cdylib"]
 [dependencies]
 mnist = { path = "../mnist" }
 wasm-bindgen = { version="0.2", features = ["serde-serialize"] }
-rayon = { version="1.5", optional=true }
-getrandom = { version="0.2", features = ["js"] }
 serde = { version = "1.0", features = ["derive"] }
+getrandom = { version="0.2", features = ["js"] }
+rayon = { version="1.5", optional=true }
 
 [features]
 multithread = ["rayon"]

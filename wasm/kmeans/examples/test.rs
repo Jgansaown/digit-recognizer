@@ -12,10 +12,10 @@ fn load_training_data() -> (Vec<u8>, Vec<u8>) {
 }
 
 fn load_testing_data() -> (Vec<u8>, Vec<u8>) {
-    let data =
-        fs::read("../files/mnist-test-data.gz").expect("Something went wrong reading the data file");
-    let labels =
-        fs::read("../files/mnist-test-label.gz").expect("Something went wrong reading the label file");
+    let data = fs::read("../files/mnist-test-data.gz")
+        .expect("Something went wrong reading the data file");
+    let labels = fs::read("../files/mnist-test-label.gz")
+        .expect("Something went wrong reading the label file");
     (decode_gz(&data), decode_gz(&labels))
 }
 
@@ -56,7 +56,7 @@ fn main() {
     };
 
     // Train clusters
-    let clusters = kmeans_naive_clustering(&training, 50, 50.0);
+    let clusters = kmeans_naive_clustering(&training, 15, 50.0);
 
     // Save clusters
     {
@@ -75,11 +75,18 @@ fn main() {
     println!("Training error rate: {}", err);
 
     let err = clusters.test(&testing);
-
-    for data in testing.iter() {
-        let labels = clusters.test_data(data.value);
-        println!("actual: {}, labels: {:?}", data.label, labels);
-        break;
-    }
     println!("Testing error rate: {}", err);
+
+    // for data in testing.iter() {
+    //     let labels = clusters.test_data(data.value);
+    //     println!("actual: {}, labels: {:?}", data.label, labels);
+    //     break;
+    // }
+
+    let result = clusters.test_dataset(&testing);
+
+    println!(
+        "Total: {}, Correct: {}, Incorrect: {}, Error Rate: {}",
+        result.total, result.correct, result.incorrect, result.error_rate
+    )
 }

@@ -46,12 +46,17 @@ impl KMeansClusters {
     }
 
     pub fn test_rgba_image(&self, rgba: Vec<u8>) -> u8 {
-        let data = mnist::rgba_image_to_grayscale_image(28, 28, &rgba);
+        let data = mnist::rgba_image_to_grayscale_image(&rgba);
         let labels = self.test_data(&data);
         match labels.first() {
             Some(&(i, _)) => i,
             None => 255,
         }
+    }
+
+    pub fn test_dataset_js(&self, dataset: &Dataset) -> JsValue {
+        let result = self.test_dataset(dataset);
+        JsValue::from_serde(&result).unwrap()
     }
 }
 #[cfg(feature = "multithread")]
@@ -106,6 +111,31 @@ impl KMeansClusters {
         );
         err_rate
     }
+    
+    pub fn test_dataset(&self, dataset: &Dataset) -> TestDatasetResult {
+        let matching: Vec<(usize, usize)> = dataset
+            .iter()
+            .map(|data| (self.find_closest_centroid(&data), data.label as usize))
+            .collect();
+
+        // let matches: Vec<[usize; 10]> = Vec::new();
+        let mut matches: Vec<[usize; 10]> = self.get_clusters().iter().map(|_| [0; 10]).collect();
+        for (id, label) in matching {
+            matches[id][label] += 1;
+        }
+
+        for (i, m) in matches.iter().enumerate() {
+            println!("label: {:?}, total: {}, {:?}", self.get_clusters()[i].label, m.iter().sum::<usize>(), m);
+        }
+
+        TestDatasetResult {
+            total: dataset.num,
+            correct: 0,
+            incorrect: 0,
+            error_rate: 0.0,
+            matches: Vec::new(),
+        }
+    }
     ///
     fn clear_cache(&mut self) {
         self.inner.iter_mut().for_each(|c| c.clear_cache());
@@ -136,4 +166,18 @@ impl ClusterInfo {
             num_of_data: cluster.num,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct TestDatasetResult {
+    pub total: usize,
+    pub correct: usize,
+    pub incorrect: usize,
+    pub error_rate: f32,
+
+    /// Number of matches for each digit in each cluster
+    ///
+    /// Tuple contains the label of the cluster,
+    /// and then number of matching digits in an array
+    pub matches: Vec<[usize; 10]>,
 }

@@ -52,8 +52,8 @@ pub fn data_as_png_base64_string(data: &[u8]) -> String {
 }
 
 #[wasm_bindgen]
-pub fn rgba_image_to_grayscale_image(width: u32, height: u32, buf: &[u8]) -> Vec<u8> {
-    let rgba = RgbaImage::from_raw(width, height, buf.to_vec()).unwrap();
+pub fn rgba_image_to_grayscale_image(data: &[u8]) -> Vec<u8> {
+    let rgba = RgbaImage::from_raw(28, 28, data.to_vec()).unwrap();
     let gray = DynamicImage::ImageRgba8(rgba).into_luma8();
     gray.into_vec()
 }
