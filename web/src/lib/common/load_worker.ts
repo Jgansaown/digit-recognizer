@@ -1,4 +1,4 @@
-import GzWorker from "./workers/gz.worker?worker&inline";
+import GzWorker from "./workers/gz.worker?worker";
 import type { MnistDataset } from "./mnist.dataset";
 
 const GZ_WORKER = new GzWorker();
