@@ -1,4 +1,4 @@
-import { decode_mnist_gz } from "./load_worker";
+import { decode_mnist_gz } from "./workers/load";
 
 const URLS = {
     training: {
@@ -17,14 +17,8 @@ export interface jsDataset {
 }
 
 export interface MnistDataset {
-    training: {
-        data: Uint8Array,
-        label: Uint8Array,
-    },
-    testing: {
-        data: Uint8Array,
-        label: Uint8Array,
-    },
+    training: jsDataset,
+    testing: jsDataset,
 };
 
 async function fetch_file(url: string): Promise<Uint8Array> {

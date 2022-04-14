@@ -1,13 +1,13 @@
 <script lang="ts">
     // UI
     import { onDestroy, onMount } from "svelte";
-    import KMeansClustering from "./lib/kmeans/KMeansClustering.svelte";
+    import KMeansClustering from "./sections/kmeans/KMeansClustering.svelte";
     // Rust wasm
     import init_gz from "@wasm/gz";
     import init_kmeans from "@wasm/kmeans";
     // Fetch MNIST dataset
-    import load_mnist_dataset from "./lib/common/mnist.dataset";
-    import type { jsDataset } from "./lib/common/mnist.dataset";
+    import load_mnist_dataset from "./lib/mnist.dataset";
+    import type { jsDataset } from "./lib/mnist.dataset";
 
     let training_dataset: jsDataset = undefined;
     let testing_dataset: jsDataset = undefined;

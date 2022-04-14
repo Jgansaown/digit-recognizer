@@ -8,7 +8,7 @@
     import { Kmeans } from "./worker/load";
     import { get_black_image } from "@wasm/kmeans";
     // Types
-    import type { jsDataset } from "../common/mnist.dataset";
+    import type { jsDataset } from "src/lib/mnist.dataset";
     import type { ClusterInfo } from "./cluster";
 
     export let js_dataset: jsDataset;

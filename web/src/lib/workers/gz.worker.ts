@@ -1,5 +1,5 @@
 import init_gz, { decode_gz } from "@wasm/gz";
-import type { MnistDataset } from "../mnist.dataset";
+import type { MnistDataset } from "src/lib/mnist.dataset";
 
 self.onmessage = async function (msg: MessageEvent<MnistDataset>) {
     await init_gz();
