@@ -319,6 +319,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "k-nearest"
+version = "0.1.0"
+dependencies = [
+ "gz",
+ "mnist",
+ "rayon",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "kmeans"
 version = "0.1.0"
 dependencies = [

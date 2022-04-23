@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "kmeans",
+    "k-nearest",
     "mnist",
     "gz"
 ]

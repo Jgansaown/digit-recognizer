@@ -70,7 +70,7 @@ pub fn save_as_image<P: AsRef<Path>>(path: P, data: &[u8]) {
 }
 
 #[wasm_bindgen]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Dataset {
     /// Number of Data
     pub num: usize,
@@ -95,6 +95,12 @@ impl Dataset {
             data: data[16..].to_vec(),
             labels: labels[8..].to_vec(),
         }
+    }
+
+    pub fn load_from_path<P: AsRef<Path>>(data: P, labels: P) -> Self {
+        let data = std::fs::read(data).unwrap();
+        let labels = std::fs::read(labels).unwrap();
+        Self::load(data, labels)
     }
 
     pub fn iter(&self) -> DataSetIterator<'_> {
@@ -139,10 +145,12 @@ pub struct Data<'a, T> {
     pub label: u8,
 }
 impl<'a> Data<'a, u8> {
-    pub fn euclidean_distance(&self, other: &Data<u8>) -> f32 {
+    ///
+    /// Also known as L2 norm or L2 distance
+    pub fn euclidean_distance(&self, other: &[u8]) -> f32 {
         self.value
             .iter()
-            .zip(other.value.iter())
+            .zip(other)
             .map(|(&a, &b)| (a as f32, b as f32))
             .map(|(a, b)| (a - b).powi(2))
             .sum::<f32>()
