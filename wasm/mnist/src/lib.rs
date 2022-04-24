@@ -112,6 +112,10 @@ impl Dataset {
             labels: &self.labels,
         }
     }
+
+    pub fn to_vec(&self) -> Vec<(u8, Vec<u8>)> {
+        self.iter().map(|d| (d.label, d.value.to_vec())).collect()
+    }
 }
 
 pub struct DataSetIterator<'a> {
