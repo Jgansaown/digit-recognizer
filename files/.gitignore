@@ -5,3 +5,5 @@
 !mnist-test-label.gz
 !mnist-training-data.gz
 !mnist-training-label.gz
+# Python graph sample script
+!parse_graph.py
