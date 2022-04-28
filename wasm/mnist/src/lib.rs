@@ -116,6 +116,18 @@ impl Dataset {
     pub fn to_vec(&self) -> Vec<(u8, Vec<u8>)> {
         self.iter().map(|d| (d.label, d.value.to_vec())).collect()
     }
+
+    pub fn to_data_flat_iter(&self) -> std::slice::Iter<'_, u8> {
+        self.data.iter()
+    }
+
+    pub fn to_data_flat_f32_vec(&self) -> Vec<f32> {
+        self.data.iter().map(|v| *v as f32).collect()
+    }
+
+    pub fn to_label_vec(&self) -> Vec<u8> {
+        self.labels.clone()
+    }
 }
 
 pub struct DataSetIterator<'a> {

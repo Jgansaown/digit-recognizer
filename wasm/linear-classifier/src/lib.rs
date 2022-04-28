@@ -1,4 +1,10 @@
+pub mod perceptron;
+mod adaline; 
+
 use mnist::Dataset;
+
+pub use perceptron::Perceptron;
+
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
