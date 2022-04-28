@@ -1,0 +1,137 @@
+#![feature(test)]
+
+extern crate test;
+use ndarray::{arr2, Array2};
+
+fn native_matrix_dot_product<const N: usize, const M: usize, const P: usize>(
+    mat1: &[[f32; N]; M],
+    mat2: &[[f32; P]; M],
+) -> [[f32; P]; N] {
+    let mut product = [[0.0; P]; N];
+    for i in 0..N {
+        for j in 0..P {
+            let mut sum = 0.0;
+            for k in 0..M {
+                sum += mat1[i][k] * mat2[k][j];
+            }
+            product[i][j] = sum;
+        }
+    }
+    product
+}
+
+fn ndarray_matrix_dot_product(a: &Array2<f32>, b: &Array2<f32>) -> Array2<f32> {
+    a.dot(b)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[test]
+    fn test_native_matrix_dot_product() {
+        let a = [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]];
+        let b = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]];
+        let ret = native_matrix_dot_product(&a, &b);
+        assert_eq!(ret, [[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]);
+    }
+
+    #[test]
+    fn test_ndarray_matrix_dot_product() {
+        let a = arr2(&[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]);
+        let b = arr2(&[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]);
+        let ret = ndarray_matrix_dot_product(&a, &b);
+        assert_eq!(ret, arr2(&[[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]));
+    }
+
+    #[bench]
+    fn bench_native_matrix_dot_product_100(bench: &mut Bencher) {
+        let a = [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]];
+        let b = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]];
+        bench.iter(|| {
+            for _ in 0..100 {
+                let ret = native_matrix_dot_product(&a, &b);
+                assert_eq!(ret, [[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]);
+            }
+        });
+    }
+    #[bench]
+    fn bench_native_matrix_dot_product_1k(bench: &mut Bencher) {
+        let a = [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]];
+        let b = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]];
+        bench.iter(|| {
+            for _ in 0..1000 {
+                let ret = native_matrix_dot_product(&a, &b);
+                assert_eq!(ret, [[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]);
+            }
+        });
+    }
+    #[bench]
+    fn bench_native_matrix_dot_product_10k(bench: &mut Bencher) {
+        let a = [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]];
+        let b = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]];
+        bench.iter(|| {
+            for _ in 0..10000 {
+                let ret = native_matrix_dot_product(&a, &b);
+                assert_eq!(ret, [[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]);
+            }
+        });
+    }
+    #[bench]
+    fn bench_native_matrix_dot_product_100k(bench: &mut Bencher) {
+        let a = [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]];
+        let b = [[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]];
+        bench.iter(|| {
+            for _ in 0..100000 {
+                let ret = native_matrix_dot_product(&a, &b);
+                assert_eq!(ret, [[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]);
+            }
+        });
+    }
+
+    #[bench]
+    fn bench_ndarray_matrix_dot_product_100(bench: &mut Bencher) {
+        let a = arr2(&[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]);
+        let b = arr2(&[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]);
+        bench.iter(|| {
+            for _ in 0..100 {
+                let ret = ndarray_matrix_dot_product(&a, &b);
+                assert_eq!(ret, arr2(&[[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]));
+            }
+        });
+    }
+    #[bench]
+    fn bench_ndarray_matrix_dot_product_1k(bench: &mut Bencher) {
+        let a = arr2(&[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]);
+        let b = arr2(&[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]);
+        bench.iter(|| {
+            for _ in 0..1000 {
+                let ret = ndarray_matrix_dot_product(&a, &b);
+                assert_eq!(ret, arr2(&[[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]));
+            }
+        });
+    }
+    #[bench]
+    fn bench_ndarray_matrix_dot_product_10k(bench: &mut Bencher) {
+        let a = arr2(&[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]);
+        let b = arr2(&[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]);
+        bench.iter(|| {
+            for _ in 0..10000 {
+                let ret = ndarray_matrix_dot_product(&a, &b);
+                assert_eq!(ret, arr2(&[[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]));
+            }
+        });
+    }
+    #[bench]
+    fn bench_ndarray_matrix_dot_product_100k(bench: &mut Bencher) {
+        let a = arr2(&[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]]);
+        let b = arr2(&[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]);
+        bench.iter(|| {
+            for _ in 0..100000 {
+                let ret = ndarray_matrix_dot_product(&a, &b);
+                assert_eq!(ret, arr2(&[[3.0, 3.0], [12.0, 12.0], [21.0, 21.0]]));
+            }
+        });
+    }
+}
