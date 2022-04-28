@@ -1,13 +1,31 @@
-pub mod perceptron;
+mod perceptron;
 mod adaline; 
 
+use ndarray::{Array2};
 use mnist::Dataset;
-
-pub use perceptron::Perceptron;
-
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
+
+const NUM_OUTPUT: usize = 10;
+const DATA_SIZE: usize = mnist::DATA_SIZE;
+
+pub use perceptron::Perceptron;
+
+pub fn dataset_to_arrays(dataset: &Dataset) -> (Array2<f32>, Array2<f32>) {
+    let data =
+        Array2::from_shape_vec((dataset.num, DATA_SIZE), dataset.to_normalized_data()).unwrap();
+    let mut label: Array2<f32> = Array2::zeros((NUM_OUTPUT, dataset.num));
+    label
+        .columns_mut()
+        .into_iter()
+        .zip(dataset.iter())
+        .for_each(|(mut c, d)| {
+            c[d.label as usize] = 1.0;
+        });
+
+    (data, label)
+}
 
 #[derive(Debug, Clone)]
 pub struct Node {

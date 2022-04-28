@@ -4,7 +4,7 @@ use std::fs;
 use std::io::prelude::*;
 
 fn iter_test(num_iter: usize, learning_rate: f32, train: &Dataset, test: &Dataset) -> Vec<usize> {
-    let mut lc = linear_classifier::LinearClassifier::new(784, 10, learning_rate);
+    let mut lc = linear_classifier::LinearClassifier::new( 784, 10, learning_rate);
     println!("Learning Rate: {}", learning_rate);
     let mut errors = Vec::new();
     for i in 0..num_iter {
@@ -31,7 +31,7 @@ fn main() {
         "../files/decoded/mnist-test-label",
     );
 
-    let num_iter = 100;
+    let num_iter = 1000;
     let rate = [0.5, 0.1, 0.05, 0.01, 0.005, 0.001];
 
     let mut file = fs::File::create("../files/lc-output.txt").unwrap();

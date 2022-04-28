@@ -128,6 +128,10 @@ impl Dataset {
     pub fn to_label_vec(&self) -> Vec<u8> {
         self.labels.clone()
     }
+
+    pub fn to_normalized_data(&self) -> Vec<f32> {
+        self.data.iter().map(|v| (*v as f32) / (0xff as f32)).collect()
+    }
 }
 
 pub struct DataSetIterator<'a> {

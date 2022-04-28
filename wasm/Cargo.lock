@@ -365,6 +365,7 @@ dependencies = [
  "mnist",
  "ndarray",
  "rayon",
+ "wasm-bindgen",
 ]
 
 [[package]]

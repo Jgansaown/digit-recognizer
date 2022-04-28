@@ -1,33 +1,7 @@
-use std::ops::{Add, AddAssign};
-
-use mnist::Dataset;
 use ndarray::{Array2, ArrayView2, Zip};
 
 const NUM_OUTPUT: usize = 10;
 const DATA_SIZE: usize = mnist::DATA_SIZE;
-
-pub fn dataset_to_arrays(dataset: &Dataset) -> (Array2<f32>, Array2<f32>) {
-    let data =
-        Array2::from_shape_vec((dataset.num, DATA_SIZE), dataset.to_data_flat_f32_vec()).unwrap();
-    let mut label: Array2<f32> = Array2::zeros((NUM_OUTPUT, dataset.num));
-    // let label = dataset.to_label_vec();
-    println!(
-        "{:?}, {:?}, {:?}",
-        label.shape(),
-        label.row(0).shape(),
-        label.column(0).shape()
-    );
-
-    label
-        .columns_mut()
-        .into_iter()
-        .zip(dataset.iter())
-        .for_each(|(mut c, d)| {
-            c[d.label as usize] = 1.0;
-        });
-
-    (data, label)
-}
 
 pub struct Perceptron {
     weights: Array2<f32>,
@@ -43,37 +17,50 @@ impl Perceptron {
         }
     }
 
-    pub fn train(&mut self, data: &Array2<f32>, label: &Array2<f32>) {
+    pub fn train(&mut self, data: &Array2<f32>, label: &Array2<f32>) -> usize {
+        let mut errors = 0;
         Zip::from(data.rows())
             .and(label.columns())
             .for_each(|input, target| {
                 let target = target.into_owned().into_shape((10, 1)).unwrap();
                 let output = self.predict(&input.into_shape((1, 784)).unwrap());
 
-                let update = self.learning_rate * (target - output);
-                
-                println!("update={:?}, weights={:?}, biases={:?}", update.shape(), self.weights.shape(), self.biases.shape());
+                // Update weights and biases
+                let update = self.learning_rate * (&target - &output);
+                self.weights = &self.weights + (&update * &input);
+                self.biases = &self.biases + &update;
 
-                // println!("{:?}, {:?}", d.shape(), l.shape());
-
-                self.weights += update.dot(&input);
-
-                self.weights.map_axis_mut(ndarray::Axis(1), |mut row| {
-                    row.zip_mut_with(&update, |v, u| {
-                        *v += u;
-                    })
-                });
-                self.biases.zip_mut_with(&update, |b , u| {
-                    *b += u;
-                })
+                let lost_func: u8 = (&target - &output)
+                    .mapv(|v| if v != 0.0 { 1 } else { 0 })
+                    .sum();
+                if lost_func > 0 {
+                    errors += 1;
+                }
             });
-
-        // println!("{:?}", label.column(0));
-        // let output = self.net_input(&data.view());
+        errors
     }
 
+    pub fn test(&self, data: &Array2<f32>, label: &Array2<f32>) -> usize {
+        let mut errors = 0;
+        Zip::from(data.rows())
+            .and(label.columns())
+            .for_each(|input, target| {
+                let target = target.into_owned().into_shape((10, 1)).unwrap();
+                let output = self.predict(&input.into_shape((1, 784)).unwrap());
+
+                let lost_func: u8 = (&target - &output)
+                    .mapv(|v| if v != 0.0 { 1 } else { 0 })
+                    .sum();
+                if lost_func > 0 {
+                    errors += 1;
+                }
+            });
+        errors
+    }
+
+
     pub fn net_input(&self, input: &ArrayView2<f32>) -> Array2<f32> {
-        self.weights.dot(&input.t()).add(&self.biases)
+        self.weights.dot(&input.t()) + &self.biases
     }
 
     pub fn predict(&self, input: &ArrayView2<f32>) -> Array2<f32> {
