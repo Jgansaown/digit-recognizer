@@ -17,7 +17,7 @@ impl Perceptron {
 
     pub fn train(&mut self, data: &Array2<f32>, label: &Array2<f32>) -> usize {
         let mut errors = 0;
-        Zip::from(data.rows())
+        Zip::from(data.columns())
             .and(label.columns())
             .for_each(|input, target| {
                 let target = target.into_owned().into_shape((10, 1)).unwrap();
@@ -40,7 +40,7 @@ impl Perceptron {
 
     pub fn test(&self, data: &Array2<f32>, label: &Array2<f32>) -> usize {
         let mut errors = 0;
-        Zip::from(data.rows())
+        Zip::from(data.columns())
             .and(label.columns())
             .for_each(|input, target| {
                 let target = target.into_owned().into_shape((10, 1)).unwrap();

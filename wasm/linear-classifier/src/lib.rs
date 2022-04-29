@@ -25,7 +25,7 @@ pub fn dataset_to_arrays(dataset: &Dataset) -> (Array2<f32>, Array2<f32>) {
             c[d.label as usize] = 1.0;
         });
 
-    (data, label)
+    (data.t().to_owned(), label)
 }
 
 #[derive(Debug, Clone)]

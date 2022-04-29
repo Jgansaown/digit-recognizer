@@ -1,4 +1,4 @@
-use linear_classifier::{Adaline, dataset_to_arrays};
+use linear_classifier::{dataset_to_arrays, Adaline};
 
 use mnist::Dataset;
 
@@ -9,17 +9,15 @@ fn run_adaline(num_iter: usize, learning_rate: f32, train: &Dataset, test: &Data
     let mut a = Adaline::new(learning_rate);
 
     for i in 0..num_iter {
-        println!("Iteration: {}", i);
         let cost = a.train(&train_data, &train_label);
-        println!("cost={}", cost);
-
-    //     let num_error = p.test(&test_data, &test_label);
-    //     println!(
-    //         "{}: Number of Errors = {}, Error Rate = {}",
-    //         i,
-    //         num_error,
-    //         (num_error as f32) / (test.num as f32)
-    //     );
+        let errors = a.test(&test_data, &test_label);
+        println!(
+            "Iteration: {}, Training Cost: {}, Number of Errors: {}, Error Rate={}",
+            i,
+            cost,
+            errors,
+            (errors as f32) / (test.num as f32)
+        );
     }
 }
 
@@ -33,5 +31,5 @@ fn main() {
         "../files/decoded/mnist-test-label",
     );
 
-    run_adaline(2, 0.01, &training_dataset, &test_dataset);
+    run_adaline(1000, 0.00001, &training_dataset, &test_dataset);
 }
