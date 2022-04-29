@@ -1,7 +1,5 @@
 use ndarray::{Array2, ArrayView2, Zip};
-
-const NUM_OUTPUT: usize = 10;
-const DATA_SIZE: usize = mnist::DATA_SIZE;
+use crate::{NUM_OUTPUT, DATA_SIZE};
 
 pub struct Perceptron {
     weights: Array2<f32>,

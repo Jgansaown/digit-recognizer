@@ -1,10 +1,10 @@
-use linear_classifier::{self, LinearClassifier};
+use linear_classifier::LinearClassifier;
 use mnist::Dataset;
 use std::fs;
 use std::io::prelude::*;
 
 fn iter_test(num_iter: usize, learning_rate: f32, train: &Dataset, test: &Dataset) -> Vec<usize> {
-    let mut lc = linear_classifier::LinearClassifier::new( 784, 10, learning_rate);
+    let mut lc = LinearClassifier::new( 784, 10, learning_rate);
     println!("Learning Rate: {}", learning_rate);
     let mut errors = Vec::new();
     for i in 0..num_iter {
