@@ -11,6 +11,7 @@ const NUM_OUTPUT: usize = 10;
 const DATA_SIZE: usize = mnist::DATA_SIZE;
 
 pub use perceptron::Perceptron;
+pub use adaline::Adaline;
 
 pub fn dataset_to_arrays(dataset: &Dataset) -> (Array2<f32>, Array2<f32>) {
     let data =
