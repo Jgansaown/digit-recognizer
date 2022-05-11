@@ -1,5 +1,5 @@
 [package]
-name = "k-nearest"
+name = "k-means"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,15 +9,14 @@ edition = "2021"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-mnist = { path = "../mnist" }
+mnist = { path = "../../helper/mnist" }
 wasm-bindgen = { version="0.2", features = ["serde-serialize"] }
-# serde = { version = "1.0", features = ["derive"] }
-# getrandom = { version="0.2", features = ["js"] }
+serde = { version = "1.0", features = ["derive"] }
+getrandom = { version="0.2", features = ["js"] }
 rayon = { version="1.5", optional=true }
 
 [features]
-default = ["multithread"]
 multithread = ["rayon"]
 
 [dev-dependencies]
-gz = { path = "../gz" }
+gz = { path = "../../helper/gz" }

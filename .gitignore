@@ -5,8 +5,8 @@
 # Git
 !.gitignore
 
-# Rust Wasm files
-!wasm
+# Rust files
+!minst-rs
 
 # Web files
 !web
