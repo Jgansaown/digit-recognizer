@@ -1,12 +1,12 @@
 use mnist::{Data, Dataset};
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
+#[cfg(feature = "multithread")]
+use rayon::prelude::*;
+
 pub struct KNearestNeighbors {
     k: usize,
     dataset: Option<Dataset>,
 }
-#[wasm_bindgen]
 impl KNearestNeighbors {
     pub fn new(k: usize) -> Self {
         Self { k, dataset: None }
@@ -44,8 +44,6 @@ impl KNearestNeighbors {
         }
     }
 }
-#[cfg(feature = "multithread")]
-use rayon::prelude::*;
 
 #[cfg(feature = "multithread")]
 impl KNearestNeighbors {

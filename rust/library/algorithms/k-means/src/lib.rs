@@ -3,16 +3,13 @@ mod cluster;
 use crate::cluster::Cluster;
 use mnist::{Data, Dataset};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
 
-#[wasm_bindgen]
 pub struct KMeansClusters {
     inner: Vec<Cluster>,
 }
-#[wasm_bindgen]
 impl KMeansClusters {
     /// Creates `K` clusters with random initial centroids
     pub fn random(k: usize) -> Self {
@@ -37,27 +34,18 @@ impl KMeansClusters {
             .sum::<f32>();
         sums / (self.inner.len() as f32)
     }
-    ///
-    pub fn get_info(&self) -> Vec<JsValue> {
-        self.inner
-            .iter()
-            .map(|c| JsValue::from_serde(&ClusterInfo::from_cluster(c)).unwrap())
-            .collect()
-    }
+    // ///
+    // pub fn get_info(&self) -> Vec<JsValue> {
+    //     self.inner
+    //         .iter()
+    //         .map(|c| JsValue::from_serde(&ClusterInfo::from_cluster(c)).unwrap())
+    //         .collect()
+    // }
 
-    pub fn test_rgba_image(&self, rgba: Vec<u8>) -> u8 {
-        let data = mnist::rgba_image_to_grayscale_image(&rgba);
-        let labels = self.test_data(&data);
-        match labels.first() {
-            Some(&(i, _)) => i,
-            None => 255,
-        }
-    }
-
-    pub fn test_dataset_js(&self, dataset: &Dataset) -> JsValue {
-        let result = self.test_dataset(dataset);
-        JsValue::from_serde(&result).unwrap()
-    }
+    // pub fn test_dataset_js(&self, dataset: &Dataset) -> JsValue {
+    //     let result = self.test_dataset(dataset);
+    //     JsValue::from_serde(&result).unwrap()
+    // }
 }
 #[cfg(feature = "multithread")]
 impl KMeansClusters {
@@ -152,21 +140,21 @@ impl KMeansClusters {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ClusterInfo {
-    img: String,
-    label: Option<u8>,
-    num_of_data: Option<usize>,
-}
-impl ClusterInfo {
-    pub fn from_cluster(cluster: &cluster::Cluster) -> ClusterInfo {
-        ClusterInfo {
-            img: mnist::data_as_png_base64_string(&cluster.centroid),
-            label: cluster.label,
-            num_of_data: cluster.num,
-        }
-    }
-}
+// #[derive(Serialize, Deserialize)]
+// pub struct ClusterInfo {
+//     img: String,
+//     label: Option<u8>,
+//     num_of_data: Option<usize>,
+// }
+// impl ClusterInfo {
+//     pub fn from_cluster(cluster: &cluster::Cluster) -> ClusterInfo {
+//         ClusterInfo {
+//             img: mnist::data_as_png_base64_string(&cluster.centroid),
+//             label: cluster.label,
+//             num_of_data: cluster.num,
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct TestDatasetResult {

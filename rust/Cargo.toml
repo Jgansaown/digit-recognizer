@@ -1,9 +1,10 @@
 [workspace]
 members = [
-    "wasm",
+    "mnist-rs",
     "library/algorithms/k-means",
     "library/algorithms/k-nearest",
     "library/algorithms/linear-classifier",
     "library/helper/gz",
     "library/helper/mnist",
+    "library/helper/image-processing"
 ]

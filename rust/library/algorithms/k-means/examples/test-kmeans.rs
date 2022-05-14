@@ -1,5 +1,5 @@
 use gz::decode_gz;
-use kmeans::KMeansClusters;
+use k_means::KMeansClusters;
 use mnist::Dataset;
 use std::fs;
 
@@ -67,7 +67,7 @@ fn main() {
         fs::create_dir(folder).unwrap();
         for (i, cluster) in clusters.get_clusters().iter().enumerate() {
             let filename = format!("{}/cluster_{}_label_{:?}.png", folder, i, cluster.label);
-            mnist::save_as_image(filename, &cluster.centroid);
+            image_processing::save_as_image(filename, &cluster.centroid);
         }
     }
 

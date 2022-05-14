@@ -6,7 +6,7 @@
 !.gitignore
 
 # Rust files
-!minst-rs
+!rust
 
 # Web files
 !web
