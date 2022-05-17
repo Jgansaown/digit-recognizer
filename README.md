@@ -1,10 +1,10 @@
 # Digit Recognition using Machine Learning and Rust
 
-[![Rust](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/rust.yml) [![Github Pages Deploy](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jgansaown/rust-digit-recognition/actions/workflows/deploy.yml)
+[![Rust](https://github.com/Jgansaown/digit-recognizer/actions/workflows/rust.yml/badge.svg)](https://github.com/Jgansaown/digit-recognizer/actions/workflows/rust.yml) [![Github Pages Deploy](https://github.com/Jgansaown/digit-recognizer/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jgansaown/digit-recognizer/actions/workflows/deploy.yml)
 
 ## Demo Site
 
-Go to the [demo site](https://jgansaown.github.io/rust-digit-recognition) hosted statically on Github Pages  to see it in action!
+Go to the [demo site](https://jgansaown.github.io/digit-recognizer) hosted statically on Github Pages  to see it in action!
 
 ## Description
 
@@ -14,12 +14,15 @@ Using Rust to implement various machine learning algorithms, compiled into WebAs
 
 ### Rust Wasm
 
-- [ ] K-Means Clustering
+- [x] K-Means Clustering
   - [x] Main algorithm
-  - [ ] Implement testing method
+  - [x] Implement testing method
 - [x] WASM for decompressing MNIST data 
-- [ ] K-Nearest Neighbors
+- [x] K-Nearest Neighbors
 - [ ] Neural Network
+  - [ ] 1 layer NN
+    - [x] Perceptron
+    - [x] Adaline
 - [ ] Convolutional Neural Network
 
 
