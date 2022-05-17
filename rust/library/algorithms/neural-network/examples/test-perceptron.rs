@@ -1,4 +1,4 @@
-use linear_classifier::{Perceptron, dataset_to_arrays};
+use neural_network::{Perceptron, dataset_to_arrays};
 use mnist::Dataset;
 
 fn run_perceptron(num_iter: usize, learning_rate: f32, train: &Dataset, test: &Dataset) {

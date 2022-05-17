@@ -1,4 +1,4 @@
-use linear_classifier::{dataset_to_arrays, Adaline};
+use neural_network::{dataset_to_arrays, Adaline};
 
 use mnist::Dataset;
 

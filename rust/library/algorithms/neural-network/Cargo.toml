@@ -1,17 +1,14 @@
 [package]
-name = "linear-classifier"
+name = "neural-network"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 mnist = { path = "../../helper/mnist" }
 rayon = { version="1.5", optional=true }
 ndarray = { version="0.15", default-features=false }
-wasm-bindgen = { version="0.2", features = ["serde-serialize"] }
 
 [features]
 default = ["multithread"]

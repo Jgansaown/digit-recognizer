@@ -1,4 +1,4 @@
-use linear_classifier::LinearClassifier;
+use neural_network::LinearClassifier;
 use mnist::Dataset;
 use std::fs;
 use std::io::prelude::*;
