@@ -12,7 +12,7 @@ fn main() {
     // decode_and_save("mnist-training-data");
     // decode_and_save("mnist-training-label");
     // decode_and_save("mnist-test-data");
-    // decode_and_save("mnist-test-label");'
+    // decode_and_save("mnist-test-label");
 
     let file = fs::read(format!("{}/{}", FOLDER, "mnist-data.tar.gz")).unwrap();
 
