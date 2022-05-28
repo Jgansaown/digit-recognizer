@@ -36,8 +36,10 @@ impl Dataset {
     }
 
     pub fn load_from_path<P: AsRef<Path>>(data: P, labels: P) -> Self {
-        let data = std::fs::read(data).unwrap();
-        let labels = std::fs::read(labels).unwrap();
+        let data = std::fs::read(data)
+            .expect(format!("current dir: {:?}", std::env::current_dir()).as_str());
+        let labels = std::fs::read(labels)
+            .expect(format!("current dir: {:?}", std::env::current_dir()).as_str());
         Self::load(data, labels)
     }
 
@@ -68,11 +70,14 @@ impl Dataset {
     }
 
     pub fn to_normalized_data(&self) -> Vec<f32> {
-        self.data.iter().map(|v| (*v as f32) / (0xff as f32)).collect()
+        self.data
+            .iter()
+            .map(|v| (*v as f32) / (0xff as f32))
+            .collect()
     }
 
-    pub fn get_one_input_data_array(&self) -> [f32; DATA_SIZE+1] {
-        let mut input = [0.0; DATA_SIZE+1];
+    pub fn get_one_input_data_array(&self) -> [f32; DATA_SIZE + 1] {
+        let mut input = [0.0; DATA_SIZE + 1];
         for (i, v) in self.iter().next().unwrap().value.iter().enumerate() {
             input[i] = (*v as f32) / (0xff as f32);
         }
