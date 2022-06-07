@@ -18,8 +18,6 @@ mod activation;
 mod layer;
 mod node;
 
-use mnist::Dataset;
-
 pub use self::activation::Activation;
 use self::layer::{DenseLayer, Layer};
 
@@ -142,8 +140,17 @@ impl NetworkBuilder {
                 "Adding Dense Layer: input={}, output={}, activation={:?}",
                 input, output, activation
             );
+
             self.layers
                 .push(Box::new(DenseLayer::new(input, output, 0.0, activation)));
+            self.next_size = Some(output);
+        }
+        self
+    }
+    pub fn custom(mut self, layer: Box<dyn Layer>, output: usize) -> Self {
+        if let Some(input) = self.next_size {
+            println!("Adding Custom Layer: input={}", input);
+            self.layers.push(layer);
             self.next_size = Some(output);
         }
         self
@@ -157,46 +164,40 @@ impl NetworkBuilder {
     }
 }
 
-fn load_training() -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
-    let dataset = mnist::Dataset::load_from_path(
-        "../../../../files/decoded/mnist-training-data",
-        "../../../../files/decoded/mnist-training-label",
-    );
-    let input: Vec<Vec<f32>> = dataset
-        .iter()
-        .map(|d| d.value.iter().map(|&v| (v as f32) / (255 as f32)).collect())
-        .collect();
-    let label: Vec<Vec<f32>> = dataset
-        .iter()
-        .map(|d| {
-            let mut o = vec![0.0; 10];
-            o[d.label as usize] = 1.0;
-            o
-        })
-        .collect();
-    (input, label)
-}
-fn load_testing() -> (Vec<Vec<f32>>, Vec<u8>) {
-    let dataset = mnist::Dataset::load_from_path(
-        "../../../../files/decoded/mnist-test-data",
-        "../../../../files/decoded/mnist-test-label",
-    );
-    let input: Vec<Vec<f32>> = dataset
-        .iter()
-        .map(|d| d.value.iter().map(|&v| (v as f32) / (255 as f32)).collect())
-        .collect();
-    let label: Vec<u8> = dataset
-        .iter()
-        .map(|d| {
-            d.label
-        })
-        .collect();
-    (input, label)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn load_training() -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
+        let dataset = mnist::Dataset::load_from_path(
+            "../../../../files/decoded/mnist-training-data",
+            "../../../../files/decoded/mnist-training-label",
+        );
+        let input: Vec<Vec<f32>> = dataset
+            .iter()
+            .map(|d| d.value.iter().map(|&v| (v as f32) / (255 as f32)).collect())
+            .collect();
+        let label: Vec<Vec<f32>> = dataset
+            .iter()
+            .map(|d| {
+                let mut o = vec![0.0; 10];
+                o[d.label as usize] = 1.0;
+                o
+            })
+            .collect();
+        (input, label)
+    }
+    fn load_testing() -> (Vec<Vec<f32>>, Vec<u8>) {
+        let dataset = mnist::Dataset::load_from_path(
+            "../../../../files/decoded/mnist-test-data",
+            "../../../../files/decoded/mnist-test-label",
+        );
+        let input: Vec<Vec<f32>> = dataset
+            .iter()
+            .map(|d| d.value.iter().map(|&v| (v as f32) / (255 as f32)).collect())
+            .collect();
+        let label: Vec<u8> = dataset.iter().map(|d| d.label).collect();
+        (input, label)
+    }
 
     #[test]
     fn test_building_network() {
@@ -223,29 +224,69 @@ mod tests {
 
         let (input, label) = load_training();
         for i in 0..100 {
-            let cost = network.gradient_descent(&input, &label, 0.01);
+            let cost = network.gradient_descent(&input, &label, 1.0);
             println!("1 layer={}: {}", i, cost);
         }
         let (input, label) = load_testing();
         let incorrect = network.test(&input, &label);
-        println!("one layer errors: {}/{}={}", incorrect, input.len(), incorrect as f32 / input.len() as f32)
+        println!(
+            "one layer errors: {}/{}={}",
+            incorrect,
+            input.len(),
+            incorrect as f32 / input.len() as f32
+        )
     }
 
     #[test]
     fn test_2_layer_network() {
         let mut network = Network::build()
             .input(784)
-            .dense(20, Activation::Sigmoid)
+            .dense(30, Activation::Sigmoid)
             .dense(10, Activation::Sigmoid)
+            .custom(
+                Box::new(DenseLayer::new(10, 10, 0.0, Activation::Perceptron)),
+                10,
+            )
             .done();
-        
+
         let (input, label) = load_training();
+        let (test_input, test_label) = load_testing();
         for i in 0..100 {
-            let cost = network.gradient_descent(&input, &label, 0.01);
-            println!("2 layer={}: {}", i, cost);
+            let cost = network.gradient_descent(&input, &label, 1.0);
+
+            let incorrect = network.test(&test_input, &test_label);
+            println!("i: {}, cost={}, incorrect={}/10000", i, cost, incorrect);
+            // println!(
+            //     "two layer errors: {}/{}={}",
+            //     incorrect,
+            //     input.len(),
+            //     incorrect as f32 / input.len() as f32
+            // )
         }
-        let (input, label) = load_testing();
-        let incorrect = network.test(&input, &label);
-        println!("two layer errors: {}/{}={}", incorrect, input.len(), incorrect as f32 / input.len() as f32)
     }
+
+    // #[test]
+    // fn test_2_layer_network_relu() {
+    //     let mut network = Network::build()
+    //         .input(784)
+    //         .dense(20, Activation::Perceptron)
+    //         .dense(10, Activation::Perceptron)
+    //         .done();
+
+    //     let (input, label) = load_training();
+    //     for i in 0..100 {
+    //         let cost = network.gradient_descent(&input, &label, 100.0);
+    //         println!("2 layer={}: {}", i, cost);
+    //         // break;
+    //     }
+
+    //     let (input, label) = load_testing();
+    //     let incorrect = network.test(&input, &label);
+    //     println!(
+    //         "two layer errors: {}/{}={}",
+    //         incorrect,
+    //         input.len(),
+    //         incorrect as f32 / input.len() as f32
+    //     )
+    // }
 }

@@ -1,5 +1,7 @@
 use std::ops::Add;
 
+use rand::{thread_rng, Rng};
+
 use super::activation::Activation;
 
 #[derive(Clone, Debug)]
@@ -14,8 +16,15 @@ pub struct Node {
 }
 impl Node {
     pub fn new(size: usize, initial: f32) -> Self {
+        // let distr = rand::distributions::Uniform::new_inclusive(-1.0, 1.0);
+        // let mut rng = thread_rng();
+        // let weights: Vec<f32> = (&mut rng).sample_iter(distr).take(size).collect();
+        // print!("{:?}", weights);
+
         Self {
             weights: vec![initial; size],
+            // weights,
+
             bias: initial,
 
             z: 0.0,
@@ -33,6 +42,7 @@ impl Node {
             .sum::<f32>()
             .add(self.bias);
         self.a = activation.apply(self.z);
+        // dbg!(&self.a);
         self.a
     }
     pub fn back_propagate(&mut self, input: &[f32], change: f32, activation: &Activation) -> f32 {

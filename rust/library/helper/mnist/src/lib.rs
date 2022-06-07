@@ -37,9 +37,9 @@ impl Dataset {
 
     pub fn load_from_path<P: AsRef<Path>>(data: P, labels: P) -> Self {
         let data = std::fs::read(data)
-            .expect(format!("current dir: {:?}", std::env::current_dir()).as_str());
+            .unwrap_or_else(|_| panic!("current dir: {:?}", std::env::current_dir()));
         let labels = std::fs::read(labels)
-            .expect(format!("current dir: {:?}", std::env::current_dir()).as_str());
+            .unwrap_or_else(|_| panic!("current dir: {:?}", std::env::current_dir()));
         Self::load(data, labels)
     }
 

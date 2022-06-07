@@ -29,19 +29,17 @@ impl DenseLayer {
             input: Vec::new(),
         }
     }
-
-    pub fn output_error(&self) {}
 }
 impl Layer for DenseLayer {
     fn feed_forward(&mut self, input: Vec<f32>) -> Vec<f32> {
-        // assert_eq!(input.len(), self.input_size);
+        assert_eq!(input.len(), self.input_size);
         self.input = input;
         let output: Vec<f32> = self
             .nodes
             .iter_mut()
             .map(|n| n.feed_forward(&self.input, &self.activator))
             .collect();
-        // assert_eq!(output.len(), self.output_size);
+        assert_eq!(output.len(), self.output_size);
         output
     }
     fn back_propagate(&mut self, change: &[f32]) -> Vec<f32> {
