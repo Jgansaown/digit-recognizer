@@ -39,7 +39,7 @@ impl Activation {
         input.max(0.0)
     }
     fn relu_prime(input: f32) -> f32 {
-        if input < 0.0 {
+        if input <= 0.0 {
             0.0
         } else {
             1.0

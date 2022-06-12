@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "mnist-rs",
+    "wasm/mnist-rs",
     "library/algorithms/k-means",
     "library/algorithms/k-nearest",
     "library/algorithms/neural-network",

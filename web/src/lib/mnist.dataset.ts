@@ -1,13 +1,15 @@
-import { decode_mnist_gz } from "./workers/load";
+// import { decode_mnist_gz } from "./workers/load";
 
 const URLS = {
     training: {
         data: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-training-data.gz",
         label: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-training-label.gz",
+        tar_gz: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-training.tar.gz",
     },
     testing: {
         data: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-test-data.gz",
-        label: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-test-label.gz"
+        label: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-test-label.gz",
+        tar_gz: "https://raw.githubusercontent.com/Jgansaown/rust-digit-recognition/main/files/mnist-testing.tar.gz",
     },
 };
 
@@ -28,7 +30,19 @@ async function fetch_file(url: string): Promise<Uint8Array> {
   return new Uint8Array(buf);
 }
 
-export default async function load_mnist_dataset(): Promise<MnistDataset> {
+export async function fetch_all_tar_gz_files() {
+    const files = await Promise.all([
+      fetch_file(URLS.training.tar_gz),
+      fetch_file(URLS.testing.tar_gz),
+    ]);
+
+    return {
+      training: files[0],
+      testing: files[1],
+    }
+}
+
+export async function fetch_all_mnist_files() {
   const files = await Promise.all([
     fetch_file(URLS.training.data),
     fetch_file(URLS.training.label),
@@ -36,7 +50,7 @@ export default async function load_mnist_dataset(): Promise<MnistDataset> {
     fetch_file(URLS.testing.label),
   ]);
 
-  return await decode_mnist_gz({
+  return {
     training: {
       data: files[0],
       label: files[1],
@@ -45,5 +59,25 @@ export default async function load_mnist_dataset(): Promise<MnistDataset> {
       data: files[2],
       label: files[3],
     },
-  });
+  };
 }
+
+// export default async function load_mnist_dataset(): Promise<MnistDataset> {
+//   const files = await Promise.all([
+//     fetch_file(URLS.training.data),
+//     fetch_file(URLS.training.label),
+//     fetch_file(URLS.testing.data),
+//     fetch_file(URLS.testing.label),
+//   ]);
+
+//   return await decode_mnist_gz({
+//     training: {
+//       data: files[0],
+//       label: files[1],
+//     },
+//     testing: {
+//       data: files[2],
+//       label: files[3],
+//     },
+//   });
+// }

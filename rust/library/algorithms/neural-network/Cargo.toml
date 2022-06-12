@@ -9,9 +9,10 @@ edition = "2021"
 mnist = { path = "../../helper/mnist" }
 rayon = { version="1.5", optional=true }
 ndarray = { version="0.15", default-features=false }
-ndarray-rand = "0.14.0"
-rand = "0.8.5"
+ndarray-rand = { version="0.14.0" }
+rand = { version="0.8.5" }
 itertools = "0.10.3"
+getrandom = { version="0.2", features = ["js"] }
 
 [features]
 default = ["multithread"]

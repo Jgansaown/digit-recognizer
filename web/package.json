@@ -20,6 +20,7 @@
     "vite": "^2.8.0"
   },
   "dependencies": {
+    "mnist-rs": "file:../rust/target/pkg/mnist-rs",
     "@wasm/gz": "file:../wasm/target/pkg/gz",
     "@wasm/kmeans": "file:../wasm/target/pkg/kmeans"
   }

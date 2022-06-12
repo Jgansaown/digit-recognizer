@@ -5,8 +5,8 @@
 //!
 //! let network = Network::build()
 //!     .input(784)
-//!     .dense(16, Activation::Relu)
-//!     .dense(10, Activation::Relu)
+//!     .dense(16, Activation::Sigmoid)
+//!     .dense(10, Activation::Sigmoid)
 //!     .done();
 //!
 //! //network.fit(&input);
@@ -16,18 +16,366 @@
 
 mod layer;
 
-use std::{
-    ops::Neg,
-    sync::{Arc, Mutex},
-};
+use std::ops::Neg;
+use std::sync::{Arc, Mutex};
 
-use itertools::izip;
+use itertools::{izip, Itertools};
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
+
+#[cfg(feature = "multithread")]
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::base::Activation;
+// use cache::
 
-use self::layer::{DenseLayer, Layer};
+use layer::{DenseLayer, Layer};
+
+use ndarray_rand::rand_distr::Uniform;
+use ndarray_rand::RandomExt;
+pub fn get_random_array1(len: usize) -> Array1<f32> {
+    Array1::random(len, Uniform::new_inclusive(-1.0, 1.0))
+}
+pub fn get_random_array2(len1: usize, len2: usize) -> Array2<f32> {
+    Array2::random((len1, len2), Uniform::new_inclusive(-1.0, 1.0))
+}
+
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+
+pub struct Network {
+    layers: Vec<Box<dyn Layer + Send + Sync>>,
+    input_size: usize,
+    output_size: usize,
+}
+impl Network {
+    pub fn build() -> NetworkBuilder {
+        NetworkBuilder::default()
+    }
+
+    pub fn predict(&self, input: ArrayView1<f32>) -> Array1<f32> {
+        // feed forward
+        self.layers
+            .iter()
+            .fold(input.to_owned(), |acc: Array1<_>, l| {
+                let (_, a): (_, Array1<_>) = l.feed_forward(acc.view());
+                a
+            })
+    }
+
+    pub fn test(&self, data: &[Array1<f32>], label: &[u8]) -> usize {
+        let mut correct = 0;
+        for (input, &target) in izip!(data, label) {
+            let output = self.predict(input.view());
+            // pick predicted digit
+            let (predict, _) = output
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .unwrap();
+
+            if predict == target as usize {
+                correct += 1;
+            }
+        }
+
+        correct
+    }
+    fn test_and_print_confusion_matrix(&self, data: &[Array1<f32>], label: &[u8]) {
+        let mut matrix: [[usize; 10]; 10] = [[0; 10]; 10];
+        for (input, &target) in izip!(data, label) {
+            let output = self.predict(input.view());
+            // pick predicted digit
+            let (predict, _) = output
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .unwrap();
+            matrix[predict][target as usize] += 1;
+        }
+        for row in matrix {
+            for v in row {
+                print!("{:>5}", v);
+            }
+            println!("");
+        }
+    }
+
+    /// mini-batch stochastic gradient descent
+    pub fn stochastic_gradient_descent(
+        &mut self,
+        data: &[Array1<f32>],
+        label: &[Array1<f32>],
+        eta: f32,
+        mini_batch_size: usize,
+    ) -> f32 {
+        assert_eq!(data.len(), label.len());
+        let n = data.len();
+
+        let mut rng = thread_rng();
+        let mut indexes: Vec<usize> = (0..n).collect();
+        indexes.shuffle(&mut rng);
+
+        let data_iter = indexes
+            .iter()
+            .map(|i| unsafe { data.get_unchecked(*i) }.view())
+            .chunks(mini_batch_size);
+        let label_iter = indexes
+            .iter()
+            .map(|i| unsafe { label.get_unchecked(*i) }.view())
+            .chunks(mini_batch_size);
+
+        let mut costs = Vec::new();
+        for (input, target) in data_iter.into_iter().zip(label_iter.into_iter()) {
+            let input: Vec<ArrayView1<_>> = input.collect();
+            let target: Vec<ArrayView1<_>> = target.collect();
+
+            let cost = self.gradient_descent(input.as_slice(), target.as_slice(), eta);
+            costs.push(cost);
+        }
+
+        for chunk in costs.chunks(10) {
+            for v in chunk {
+                print!("{:>8.4}", v)
+            }
+            println!("");
+        }
+
+        *costs.last().unwrap()
+    }
+
+    /// Train network using gradient descent
+    pub fn gradient_descent(
+        &mut self,
+        data: &[ArrayView1<f32>],
+        label: &[ArrayView1<f32>],
+        eta: f32,
+    ) -> f32 {
+        let mut cost = 0.0;
+        // back propagation over all inputs
+        let mut nabla: Vec<(Array2<f32>, Array1<f32>)> = self.new_nabla();
+        for (input, target) in izip!(data, label) {
+            cost += self.back_propagation(input.view(), target.view(), &mut nabla);
+        }
+
+        // average nabla
+        let n = data.len();
+        for (dw, db) in &mut nabla {
+            dw.mapv_inplace(|v| eta * v / n as f32);
+            db.mapv_inplace(|v| eta * v / n as f32);
+        }
+
+        // update weights and biases
+        for (layer, (dw, db)) in izip!(&mut self.layers, &nabla) {
+            layer.update_weights_and_biases(dw.view(), db.view());
+        }
+
+        cost / (2.0 * n as f32)
+    }
+
+    /// Run back propagation with the network
+    ///
+    /// Takes in an input that will be fed into the network,
+    /// and the targeted output that will be used to calculate the gradients
+    ///
+    fn back_propagation<'a>(
+        &'a self,
+        input: ArrayView1<f32>,
+        target: ArrayView1<f32>,
+        nabla: &mut [(Array2<f32>, Array1<f32>)],
+    ) -> f32 {
+        // Storing all the outputs: (layer l, z^l, a^l)
+        let mut cache: NetworkCache<'a, f32> = NetworkCache::new(input.to_owned());
+
+        // forward pass and cache the outputs
+        for layer in &self.layers {
+            let input: ArrayView1<_> = cache.last().a.view();
+            let (z, a): (Array1<_>, Array1<_>) = layer.feed_forward(input);
+            cache.push(layer.as_ref(), z, a);
+        }
+
+        // backward pass
+        let mut delta: Array1<_> = Array1::zeros(0);
+
+        for l in (((cache.len() - 1) as isize).neg()..=-1).rev() {
+            if l == -1 {
+                // calculate delta of last layer
+                let output: ArrayView1<_> = cache.last().a.view();
+                delta = cache.delta_last_layer(self.cost_derivative(output, target));
+            } else {
+                // calculate delta of layer based on last delta
+                delta = cache.delta(l, delta.view());
+            }
+            // find the gradients for layer's weights and biases
+            let (dw, db): (Array2<f32>, Array1<f32>) = cache.nabla(l, delta.view());
+
+            // update nabla
+            let (nabla_w, nabla_b) = nabla.get_mut(nabla.len() - l.unsigned_abs()).unwrap();
+            nabla_w.zip_mut_with(&dw, |nabla, w| *nabla += w);
+            nabla_b.zip_mut_with(&db, |nabla, b| *nabla += b);
+        }
+
+        self.cost(cache.last().a.view(), target)
+    }
+
+    fn new_nabla(&self) -> Vec<(Array2<f32>, Array1<f32>)> {
+        self.layers
+            .iter()
+            .map(|l| {
+                let dw: Array2<f32> = Array2::zeros(l.weights().raw_dim());
+                let db: Array1<f32> = Array1::zeros(l.biases().raw_dim());
+                (dw, db)
+            })
+            .collect()
+    }
+
+    /// Cost Function (Loss Function/Objective Function)
+    ///
+    fn cost(&self, output: ArrayView1<f32>, target: ArrayView1<f32>) -> f32 {
+        (&target - &output).mapv(|v| v.powi(2)).sum().sqrt().powi(2)
+    }
+
+    fn cost_derivative(&self, output: ArrayView1<f32>, target: ArrayView1<f32>) -> Array1<f32> {
+        &output - &target
+    }
+}
+
+#[cfg(feature = "multithread")]
+impl Network {
+    fn par_gradient_descent(
+        &mut self,
+        data: &[ArrayView1<f32>],
+        label: &[ArrayView1<f32>],
+        eta: f32,
+    ) -> f32 {
+        let cost = Arc::new(Mutex::new(0.0));
+        // back propagation over all inputs
+        let mut nabla: Vec<(Array2<f32>, Array1<f32>)> = data
+            .par_iter()
+            .zip(label)
+            .fold(
+                || self.new_nabla(),
+                |mut nabla, (input, target)| {
+                    let c = self.back_propagation(input.view(), target.view(), &mut nabla);
+
+                    *cost.clone().lock().unwrap() += c;
+                    nabla
+                },
+            )
+            .reduce(
+                || self.new_nabla(),
+                |mut acc, value| {
+                    acc.iter_mut().zip(value).for_each(|(a, v)| {
+                        a.0.zip_mut_with(&v.0, |a, v| *a += v);
+                        a.1.zip_mut_with(&v.1, |a, v| *a += v);
+                    });
+                    acc
+                },
+            );
+
+        // average nabla
+        let n = data.len();
+        for (dw, db) in &mut nabla {
+            dw.mapv_inplace(|v| eta * v / n as f32);
+            db.mapv_inplace(|v| eta * v / n as f32);
+        }
+        // update weights and biases
+        for (layer, (dw, db)) in izip!(&mut self.layers, &nabla) {
+            layer.update_weights_and_biases(dw.view(), db.view());
+        }
+
+        let c = *cost.lock().unwrap();
+        c / (2.0 * n as f32)
+    }
+
+    /// mini-batch stochastic gradient descent
+    pub fn par_stochastic_gradient_descent(
+        &mut self,
+        data: &[Array1<f32>],
+        label: &[Array1<f32>],
+        eta: f32,
+        mini_batch_size: usize,
+    ) -> f32 {
+        assert_eq!(data.len(), label.len());
+        let n = data.len();
+
+        let mut rng = thread_rng();
+        let mut indexes: Vec<usize> = (0..n).collect();
+        indexes.shuffle(&mut rng);
+
+        let data_iter = indexes
+            .iter()
+            .map(|i| unsafe { data.get_unchecked(*i) }.view())
+            .chunks(mini_batch_size);
+        let label_iter = indexes
+            .iter()
+            .map(|i| unsafe { label.get_unchecked(*i) }.view())
+            .chunks(mini_batch_size);
+
+        let mut costs = Vec::new();
+        for (input, target) in data_iter.into_iter().zip(label_iter.into_iter()) {
+            let input: Vec<ArrayView1<_>> = input.collect();
+            let target: Vec<ArrayView1<_>> = target.collect();
+
+            let cost = self.par_gradient_descent(input.as_slice(), target.as_slice(), eta);
+            costs.push(cost);
+        }
+
+        // for chunk in costs.chunks(10) {
+        //     for v in chunk {
+        //         print!("{:>8.4}", v)
+        //     }
+        //     println!("");
+        // }
+
+        *costs.last().unwrap()
+    }
+
+}
+
+#[derive(Default)]
+pub struct NetworkBuilder {
+    input_size: Option<usize>,
+    next_size: Option<usize>,
+    layers: Vec<Box<dyn Layer + Send + Sync>>,
+}
+impl NetworkBuilder {
+    pub fn input(mut self, size: usize) -> Self {
+        self.input_size = Some(size);
+        self.next_size = Some(size);
+        self
+    }
+    pub fn dense(mut self, output: usize, activation: Activation) -> Self {
+        if let Some(input) = self.next_size {
+            println!(
+                "Adding Dense Layer: input={}, output={}, activation={:?}",
+                input, output, activation
+            );
+
+            // self.layers
+            //     .push(Box::new(DenseLayer::new(input, output, activation)));
+            self.layers
+                .push(Box::new(DenseLayer::random(input, output, activation)));
+
+            self.next_size = Some(output);
+        }
+        self
+    }
+    pub fn custom(mut self, layer: Box<dyn Layer + Send + Sync>, output: usize) -> Self {
+        if let Some(input) = self.next_size {
+            println!("Adding Custom Layer: input={}", input);
+            self.layers.push(layer);
+            self.next_size = Some(output);
+        }
+        self
+    }
+    pub fn done(self) -> Network {
+        Network {
+            input_size: self.input_size.unwrap_or_default(),
+            output_size: self.next_size.unwrap_or_default(),
+            layers: self.layers,
+        }
+    }
+}
 
 struct LayerCache<'a, T> {
     layer: Option<&'a dyn Layer>,
@@ -120,229 +468,6 @@ impl<'a> NetworkCache<'a, f32> {
     }
 }
 
-pub struct Network {
-    layers: Vec<Box<dyn Layer + Send + Sync>>,
-    input_size: usize,
-    output_size: usize,
-}
-impl Network {
-    pub fn build() -> NetworkBuilder {
-        NetworkBuilder::default()
-    }
-
-    fn predict(&self, input: ArrayView1<f32>) -> Array1<f32> {
-        // feed forward
-        self.layers
-            .iter()
-            .fold(input.to_owned(), |acc: Array1<_>, l| {
-                let (_, a): (_, Array1<_>) = l.feed_forward(acc.view());
-                a
-            })
-    }
-
-    fn test(&self, data: &[Array1<f32>], label: &[u8]) -> usize {
-        let mut correct = 0;
-        for (input, &target) in izip!(data, label) {
-            let output = self.predict(input.view());
-            // pick predicted digit
-            let (p, _) = output
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-                .unwrap();
-
-            if p as u8 == target {
-                correct += 1;
-            }
-        }
-
-        // TODO: return confusion matrix
-
-        correct
-    }
-
-    fn gradient_descent(&mut self, data: &[Array1<f32>], label: &[Array1<f32>], eta: f32) -> f32 {
-        let mut cost = 0.0;
-        // back propagation over all inputs
-        let mut nabla: Vec<(Array2<f32>, Array1<f32>)> = self.new_nabla();
-        for (input, target) in izip!(data, label) {
-            cost += self.back_propagation(input.view(), target.view(), &mut nabla);
-        }
-
-        // average nabla
-        let n = data.len();
-        for (dw, db) in &mut nabla {
-            dw.mapv_inplace(|v| eta * v / n as f32);
-            db.mapv_inplace(|v| eta * v / n as f32);
-        }
-
-        // update weights and biases
-        for (layer, (dw, db)) in izip!(&mut self.layers, &nabla) {
-            layer.update_weights_and_biases(dw.view(), db.view());
-        }
-
-        cost / (2.0 * n as f32)
-    }
-
-    /// Run back propagation with the network
-    ///
-    /// Takes in an input that will be fed into the network,
-    /// and the targeted output that will be used to calculate the gradients
-    ///
-    fn back_propagation<'a>(
-        &'a self,
-        input: ArrayView1<f32>,
-        target: ArrayView1<f32>,
-        nabla: &mut [(Array2<f32>, Array1<f32>)],
-    ) -> f32 {
-        // Storing all the outputs: (layer l, z^l, a^l)
-        let mut cache: NetworkCache<'a, f32> = NetworkCache::new(input.to_owned());
-
-        // forward pass and cache the outputs
-        for layer in &self.layers {
-            let input: ArrayView1<_> = cache.last().a.view();
-            let (z, a): (Array1<_>, Array1<_>) = layer.feed_forward(input);
-            cache.push(layer.as_ref(), z, a);
-        }
-
-        // backward pass
-        let mut delta: Array1<_> = Array1::zeros(0);
-
-        for l in (((cache.len() - 1) as isize).neg()..=-1).rev() {
-            if l == -1 {
-                // calculate delta of last layer
-                let output: ArrayView1<_> = cache.last().a.view();
-                delta = cache.delta_last_layer(self.cost_derivative(output, target));
-            } else {
-                // calculate delta of layer based on last delta
-                delta = cache.delta(l, delta.view());
-            }
-            // find the gradients for layer's weights and biases
-            let (dw, db): (Array2<f32>, Array1<f32>) = cache.nabla(l, delta.view());
-
-            // update nabla
-            let (nabla_w, nabla_b) = nabla.get_mut(nabla.len() - l.unsigned_abs()).unwrap();
-            nabla_w.zip_mut_with(&dw, |nabla, w| *nabla += w);
-            nabla_b.zip_mut_with(&db, |nabla, b| *nabla += b);
-        }
-
-        self.cost(cache.last().a.view(), target)
-    }
-
-    fn new_nabla(&self) -> Vec<(Array2<f32>, Array1<f32>)> {
-        self.layers
-            .iter()
-            .map(|l| {
-                let dw: Array2<f32> = Array2::zeros(l.weights().raw_dim());
-                let db: Array1<f32> = Array1::zeros(l.biases().raw_dim());
-                (dw, db)
-            })
-            .collect()
-    }
-
-    /// Cost Function (Loss Function/Objective Function)
-    ///
-    fn cost(&self, output: ArrayView1<f32>, target: ArrayView1<f32>) -> f32 {
-        (&target - &output).mapv(|v| v.powi(2)).sum().sqrt().powi(2)
-    }
-
-    fn cost_derivative(&self, output: ArrayView1<f32>, target: ArrayView1<f32>) -> Array1<f32> {
-        &output - &target
-    }
-}
-impl Network {
-    fn par_gradient_descent(
-        &mut self,
-        data: &[Array1<f32>],
-        label: &[Array1<f32>],
-        eta: f32,
-    ) -> f32 {
-        let cost = Arc::new(Mutex::new(0.0));
-        // back propagation over all inputs
-        let mut nabla: Vec<(Array2<f32>, Array1<f32>)> = data
-            .par_iter()
-            .zip(label)
-            .fold(
-                || self.new_nabla(),
-                |mut nabla, (input, target)| {
-                    let c = self.back_propagation(input.view(), target.view(), &mut nabla);
-
-                    *cost.clone().lock().unwrap() += c;
-                    nabla
-                },
-            )
-            .reduce(
-                || self.new_nabla(),
-                |mut acc, value| {
-                    acc.iter_mut().zip(value).for_each(|(a, v)| {
-                        a.0.zip_mut_with(&v.0, |a, v| *a += v);
-                        a.1.zip_mut_with(&v.1, |a, v| *a += v);
-                    });
-                    acc
-                },
-            );
-
-        // average nabla
-        let n = data.len();
-        for (dw, db) in &mut nabla {
-            dw.mapv_inplace(|v| eta * v / n as f32);
-            db.mapv_inplace(|v| eta * v / n as f32);
-        }
-        // update weights and biases
-        for (layer, (dw, db)) in izip!(&mut self.layers, &nabla) {
-            layer.update_weights_and_biases(dw.view(), db.view());
-        }
-
-        let c = *cost.lock().unwrap();
-        c / (2.0 * n as f32)
-    }
-}
-
-#[derive(Default)]
-pub struct NetworkBuilder {
-    input_size: Option<usize>,
-    next_size: Option<usize>,
-    layers: Vec<Box<dyn Layer + Send + Sync>>,
-}
-impl NetworkBuilder {
-    pub fn input(mut self, size: usize) -> Self {
-        self.input_size = Some(size);
-        self.next_size = Some(size);
-        self
-    }
-    pub fn dense(mut self, output: usize, activation: Activation) -> Self {
-        if let Some(input) = self.next_size {
-            println!(
-                "Adding Dense Layer: input={}, output={}, activation={:?}",
-                input, output, activation
-            );
-
-            // self.layers
-            //     .push(Box::new(DenseLayer::new(input, output, activation)));
-            self.layers
-                .push(Box::new(DenseLayer::random(input, output, activation)));
-
-            self.next_size = Some(output);
-        }
-        self
-    }
-    pub fn custom(mut self, layer: Box<dyn Layer + Send + Sync>, output: usize) -> Self {
-        if let Some(input) = self.next_size {
-            println!("Adding Custom Layer: input={}", input);
-            self.layers.push(layer);
-            self.next_size = Some(output);
-        }
-        self
-    }
-    pub fn done(self) -> Network {
-        Network {
-            input_size: self.input_size.unwrap_or_default(),
-            output_size: self.next_size.unwrap_or_default(),
-            layers: self.layers,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -414,12 +539,16 @@ mod tests {
     fn test_network() {
         let mut network = Network::build()
             .input(784)
-            .dense(20, Activation::Sigmoid)
-            .dense(20, Activation::Sigmoid)
+            .dense(16, Activation::Sigmoid)
+            .dense(16, Activation::Sigmoid)
             .dense(10, Activation::Sigmoid)
             .done();
 
         let (input, label): (Vec<Array1<f32>>, Vec<Array1<f32>>) = load_training();
+
+        let input: Vec<ArrayView1<_>> = input.iter().map(|i| i.view()).collect();
+        let label: Vec<ArrayView1<_>> = label.iter().map(|l| l.view()).collect();
+
         let (test_input, test_label): (Vec<Array1<f32>>, Vec<u8>) = load_testing();
         let test_n = test_input.len();
         for i in 0..1000 {
@@ -427,7 +556,7 @@ mod tests {
             let cost = network.par_gradient_descent(&input, &label, 3.0);
             // println!("{}: cost={}", i, cost);
             let correct = network.test(&test_input, &test_label);
-            println!("{}: cost={}, test={}/{}", i, cost, correct, test_n);
+            println!("{:<4}: cost={:.5}, test={:>4}/{}", i, cost, correct, test_n);
         }
         for (input, label) in izip!(test_input, test_label) {
             let output = network.predict(input.view());
@@ -445,5 +574,31 @@ mod tests {
 
         println!("{}", layer.as_string());
         println!("z={:?}, a={:?}", z, a);
+    }
+
+    
+    #[test]
+    fn test_stochastic_gradient_descent() {
+        let mut network = Network::build()
+            .input(784)
+            .dense(16, Activation::Sigmoid)
+            .dense(16, Activation::Sigmoid)
+            .dense(10, Activation::Sigmoid)
+            .done();
+
+        let (input, label): (Vec<Array1<f32>>, Vec<Array1<f32>>) = load_training();
+        let (test_input, test_label): (Vec<Array1<f32>>, Vec<u8>) = load_testing();
+        let test_n = test_input.len();
+        for i in 0..10000 {
+            let cost = network.par_stochastic_gradient_descent(&input, &label, 3.0, 1000);
+            // println!("{:<4}: cost={:.5}", i, cost);
+            let correct = network.test(&test_input, &test_label);
+            println!("{:<4}: cost={:.5}, test={:>4}/{}", i, cost, correct, test_n);
+        }
+        // for (input, label) in izip!(test_input, test_label) {
+        //     let output = network.predict(input.view());
+        //     println!("{}: {}", label, output);
+        //     break;
+        // }
     }
 }

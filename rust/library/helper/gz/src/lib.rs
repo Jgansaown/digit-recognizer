@@ -1,29 +1,24 @@
 use flate2::read::GzDecoder;
 use std::fs;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tar::Archive;
 
-pub fn untargz(tar_gz: &[u8]) -> [Vec<u8>; 4] {
-    let mut raw_buffers = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
-    let mut archive = Archive::new(GzDecoder::new(tar_gz));
+use std::collections::HashMap;
 
+pub fn unpack_tar_gz(tar_gz: &[u8]) -> HashMap<PathBuf, Vec<u8>> {
+    let mut files = HashMap::new();
+    let mut archive = Archive::new(GzDecoder::new(tar_gz));
     for file in archive.entries().unwrap() {
         let mut file = file.unwrap();
-        if let Ok(p) = file.header().path() {
-            let raw = match p.to_str() {
-                Some("mnist-test-data") => Some(&mut raw_buffers[0]),
-                Some("mnist-test-label") => Some(&mut raw_buffers[1]),
-                Some("mnist-training-data") => Some(&mut raw_buffers[2]),
-                Some("mnist-training-label") => Some(&mut raw_buffers[3]),
-                _ => None,
-            };
-            if let Some(buf) = raw {
-                file.read_to_end(buf).expect("error reading file to buffer");
-            }
+        if let Ok(path) = file.header().path().map(|p| p.to_path_buf()) {
+            let mut raw = Vec::new();
+            file.read_to_end(&mut raw)
+                .expect("error reading file to buffer");
+            files.insert(path, raw);
         }
     }
-    raw_buffers
+    files
 }
 
 pub fn decode_gz(gzfile: &[u8]) -> Vec<u8> {

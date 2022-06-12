@@ -20,10 +20,10 @@ pub struct Dataset {
 impl Dataset {
     /// Combines both MNIST raw data and label into a singular dataset
     ///
-    pub fn load(data: Vec<u8>, labels: Vec<u8>) -> Self {
+    pub fn load(data: Vec<u8>, label: Vec<u8>) -> Self {
         assert_eq!(slice_to_u32(&data[0..4]), DATA_MAGIC_NUMBER);
-        assert_eq!(slice_to_u32(&labels[0..4]), LABEL_MAGIC_NUMBER);
-        assert_eq!(slice_to_u32(&data[4..8]), slice_to_u32(&labels[4..8]));
+        assert_eq!(slice_to_u32(&label[0..4]), LABEL_MAGIC_NUMBER);
+        assert_eq!(slice_to_u32(&data[4..8]), slice_to_u32(&label[4..8]));
 
         let row = slice_to_u32(&data[8..12]);
         let col = slice_to_u32(&data[12..16]);
@@ -31,7 +31,7 @@ impl Dataset {
             num: slice_to_u32(&data[4..8]) as usize,
             size: (row * col) as usize,
             data: data[16..].to_vec(),
-            labels: labels[8..].to_vec(),
+            labels: label[8..].to_vec(),
         }
     }
 

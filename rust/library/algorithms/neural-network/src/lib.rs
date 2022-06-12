@@ -1,5 +1,5 @@
 pub mod base;
-mod matrix;
+pub mod matrix;
 
 mod perceptron;
 mod adaline; 

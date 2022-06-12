@@ -15,10 +15,8 @@ fn main() {
     // decode_and_save("mnist-test-label");
 
     let file = fs::read(format!("{}/{}", FOLDER, "mnist-data.tar.gz")).unwrap();
-
-    let ret = gz::untargz(&file);
-
-    for r in ret {
-        println!("{}", r.len());
+    let unpacked = gz::unpack_tar_gz(&file);
+    for (path, file) in unpacked {
+        println!("{:?}: {}", path, file.len());
     }
 }
