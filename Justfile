@@ -7,16 +7,29 @@ WEB := ROOT + "/web"
 TARGET := ROOT + "/target"
 WASM_TARGET := ROOT + "/target/wasm"
 NODE_MODULES := ROOT + "/node_modules"
+WEB_DIST := ROOT + "/dist"
 
 _default:
     @just --list
+
+### All
+#
+build: wasm-build-all && web-build
+    npm i
+#
+clean: wasm-clean-all web-clean
 
 ### Rust Crates
 
 
 ### WebAssembly
-# builds selected wasm crate
-build-wasm crate:
+# build all wasm crate
+wasm-build-all: (wasm-build "mnist-rs") (wasm-build "unpack")
+# clean wasm output
+wasm-clean-all:
+    rm -r {{WASM_TARGET}}
+# build selected wasm crate
+wasm-build crate:
 	wasm-pack build \
 		--target web \
 		--release \
@@ -25,5 +38,15 @@ build-wasm crate:
 		{{WASM}}/{{crate}}
 
 ### Web
-build-web:
-    npx vite build ./web --outDir ../dist --emptyOutDir
+#
+web-build:
+    npx vite build {{WEB}} --outDir {{WEB_DIST}} --emptyOutDir
+#
+web-clean:
+    rm -r {{WEB_DIST}}
+#
+web-dev:
+    npx vite {{WEB}}
+#
+web-preview:
+    npx vite preview
