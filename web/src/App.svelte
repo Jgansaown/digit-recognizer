@@ -1,44 +1,40 @@
 <script lang="ts">
     // UI
     import { onDestroy, onMount } from "svelte";
+    // Dataset
+    import { load_all } from "./lib/mnist.dataset";
+    import type { MnistDataset } from "./lib/mnist.dataset";
 
-    import init, { run_network, MnistDataset } from "mnist-rs";
+    import KMeansClustering from "./sections/kmeans/KMeansClustering.svelte";
 
-    // import KMeansClustering from "./sections/kmeans/KMeansClustering.svelte";
     // Rust wasm
     // import init_gz from "@wasm/gz";
     // import init_kmeans from "@wasm/kmeans";
     // Fetch MNIST dataset
     // import load_mnist_dataset from "./lib/mnist.dataset";
     // import type { jsDataset } from "./lib/mnist.dataset";
-    import { fetch_all_mnist_files, fetch_all_tar_gz_files } from "./lib/mnist.dataset";
 
-    // let training_dataset: jsDataset = undefined;
-    // let testing_dataset: jsDataset = undefined;
+    import * as Comlink from "comlink";
+    import type { obj } from "./lib/workers/mnist.wasm.worker";
+import PreTrainedModels from "./components/PreTrainedModels.svelte";
 
-    // let ml_algro: string = "kmc";
+    let dataset: MnistDataset;
+
+    let ml_algro: string = "kmc";
 
     onMount(async () => {
-        // init all wasm modules
-        // await Promise.all([init_gz(), init_kmeans()]);
+        dataset = await load_all();
 
-        await init();
+        const NeuralNetwork = Comlink.wrap<typeof obj>(
+            new Worker(
+                new URL("./lib/workers/mnist.wasm.worker.ts", import.meta.url),
+                {
+                    type: "module",
+                }
+            )
+        );
+        await NeuralNetwork.init();
 
-        const files = await fetch_all_tar_gz_files();
-        
-        const training_dataset = MnistDataset.from_tar_gz(files.training);
-        const testing_dataset = MnistDataset.from_tar_gz(files.testing);
-
-        console.log(training_dataset);
-        console.log(testing_dataset);
- 
-        // run_network(training_dataset, testing_dataset);
-        
-        // // Loading training and testing dataset
-        // load_mnist_dataset().then(({ training: ds1, testing: ds2 }) => {
-        //     training_dataset = ds1;
-        //     testing_dataset = ds2;
-        // });
     });
 
     onDestroy(() => {});
@@ -47,7 +43,15 @@
 <main>
     <h1>Recognizing Handwritten Digits using Machine Learning!</h1>
 
-    <!-- <p>Select Machine Learning Algorithm:</p>
+    <p>Shows how different machine learning algroithms work in an interactive way</p>
+
+    
+    <h2>Try the Pre-Trained Models</h2>
+    <PreTrainedModels />
+    
+    <h2>Train your own models</h2>
+
+    <p>Select Machine Learning Algorithm:</p>
     <div id="algro_select">
         <label>
             <input type="radio" bind:group={ml_algro} value={"kmc"} />
@@ -65,15 +69,15 @@
             <input type="radio" bind:group={ml_algro} value={"cnn"} disabled />
             Convolutional Neural Network
         </label>
-    </div> -->
+    </div>
 
     <!-- Training -->
-    <!-- {#if training_dataset == undefined}
+    {#if dataset == undefined}
         <p>Loading Training Dataset...</p>
     {:else}
         <div>
             {#if ml_algro == "kmc"}
-                <KMeansClustering js_dataset={training_dataset} />
+                <KMeansClustering js_dataset={dataset.training} />
             {:else if ml_algro == "knn"}
                 <h2>K Nearest Neighbours</h2>
             {:else if ml_algro == "nn"}
@@ -82,7 +86,7 @@
                 <h2>Convolutional Neural Network</h2>
             {/if}
         </div>
-    {/if} -->
+    {/if}
 
     <!-- Testing -->
 </main>

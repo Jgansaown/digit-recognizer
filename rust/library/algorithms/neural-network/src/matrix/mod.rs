@@ -535,6 +535,7 @@ mod tests {
         assert_eq!(output, arr1(&[0.5; 10]));
     }
 
+    #[cfg(feature = "multithread")]
     #[test]
     fn test_network() {
         let mut network = Network::build()
@@ -577,6 +578,7 @@ mod tests {
     }
 
     
+    #[cfg(feature = "multithread")]
     #[test]
     fn test_stochastic_gradient_descent() {
         let mut network = Network::build()

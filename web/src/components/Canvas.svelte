@@ -9,6 +9,10 @@
 
     let m = { x: 0, y: 0 };
 
+    $: if (canvas?.clientWidth) {
+        console.log(canvas.clientWidth, canvas.clientHeight);
+    }
+
     onMount(() => {
         ctx = canvas.getContext("2d");
         canvas.height = canvas.width * 1.0;
@@ -52,8 +56,10 @@
 </script>
 
 <!-- <p>The mouse position is {m.x} x {m.y}</p> -->
-<div>
+<div >
     <canvas
+        class={$$props.class}
+
         bind:this={canvas}
         width={28}
         height={28}
@@ -65,6 +71,8 @@
     <button
         on:click={() => {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            console.log(canvas.clientWidth, canvas.clientHeight);
         }}>Clear Canvas</button
     >
 </div>
@@ -76,8 +84,8 @@
         align-items: center;
     }
     canvas {
-        width: 100%;
-        max-width: 300px;
+        /* width: 100%;
+        max-width: 300px; */
         /* height: 100%;
         max-height: 300px; */
     }

@@ -20,6 +20,7 @@ pub struct Dataset {
 impl Dataset {
     /// Combines both MNIST raw data and label into a singular dataset
     ///
+    /// **Copies the data into struct**
     pub fn load(data: Vec<u8>, label: Vec<u8>) -> Self {
         assert_eq!(slice_to_u32(&data[0..4]), DATA_MAGIC_NUMBER);
         assert_eq!(slice_to_u32(&label[0..4]), LABEL_MAGIC_NUMBER);

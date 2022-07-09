@@ -1,4 +1,12 @@
-// import { decode_mnist_gz } from "./workers/load";
+import * as Comlink from "comlink";
+
+import type { unpack as unpack_worker } from "./workers/unpack.worker";
+
+const unpack = Comlink.wrap<typeof unpack_worker>(
+    new Worker(new URL("./workers/unpack.worker.ts", import.meta.url), {
+        type: "module",
+    })
+);
 
 const URLS = {
     training: {
@@ -14,70 +22,79 @@ const URLS = {
 };
 
 export interface jsDataset {
-  data: Uint8Array;
-  label: Uint8Array;
+    data: Uint8Array;
+    label: Uint8Array;
 }
 
 export interface MnistDataset {
-    training: jsDataset,
-    testing: jsDataset,
-};
-
-async function fetch_file(url: string): Promise<Uint8Array> {
-  let resp = await fetch(url);
-  let blob = await resp.blob();
-  let buf = await blob.arrayBuffer();
-  return new Uint8Array(buf);
+    training: jsDataset;
+    testing: jsDataset;
 }
 
-export async function fetch_all_tar_gz_files() {
-    const files = await Promise.all([
-      fetch_file(URLS.training.tar_gz),
-      fetch_file(URLS.testing.tar_gz),
-    ]);
-
-    return {
-      training: files[0],
-      testing: files[1],
+async function* streamAsyncIterable(stream: ReadableStream) {
+    const reader = stream.getReader();
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) return;
+            yield value;
+        }
+    } finally {
+        reader.releaseLock();
     }
 }
 
-export async function fetch_all_mnist_files() {
-  const files = await Promise.all([
-    fetch_file(URLS.training.data),
-    fetch_file(URLS.training.label),
-    fetch_file(URLS.testing.data),
-    fetch_file(URLS.testing.label),
-  ]);
+async function fetch_file_progress(url: string) {
+    const filename = url.split("/").at(-1);
+    const response = await fetch(url);
 
-  return {
-    training: {
-      data: files[0],
-      label: files[1],
-    },
-    testing: {
-      data: files[2],
-      label: files[3],
-    },
-  };
+    let receivedLength = 0;
+    const contentLength = +response.headers.get("Content-Length");
+
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of streamAsyncIterable(response.body)) {
+        chunks.push(chunk);
+        // progress
+        receivedLength += chunk.length;
+        const progress = (receivedLength / contentLength) * 100;
+        console.debug(`Downloading: ${filename}, ${progress.toFixed(2)}%`);
+    }
+    const blob = new Blob(chunks);
+    return new Uint8Array(await blob.arrayBuffer());
 }
 
-// export default async function load_mnist_dataset(): Promise<MnistDataset> {
-//   const files = await Promise.all([
-//     fetch_file(URLS.training.data),
-//     fetch_file(URLS.training.label),
-//     fetch_file(URLS.testing.data),
-//     fetch_file(URLS.testing.label),
-//   ]);
+async function fetch_file(url: string): Promise<Uint8Array> {
+    return fetch_file_progress(url);
+    // let resp = await fetch(url);
+    // let blob = await resp.blob();
+    // let buf = await blob.arrayBuffer();
+    // return new Uint8Array(buf);
+}
 
-//   return await decode_mnist_gz({
-//     training: {
-//       data: files[0],
-//       label: files[1],
-//     },
-//     testing: {
-//       data: files[2],
-//       label: files[3],
-//     },
-//   });
-// }
+export async function load_dataset(
+    type: "training" | "testing"
+): Promise<jsDataset> {
+    const gzFiles = await Promise.all([
+        fetch_file(URLS[type].data),
+        fetch_file(URLS[type].label),
+    ]);
+    const files = await Promise.all([
+        unpack.gz(gzFiles[0]),
+        unpack.gz(gzFiles[1]),
+    ]);
+    return {
+        data: files[0],
+        label: files[1],
+    };
+}
+
+export async function load_all(): Promise<MnistDataset> {
+    const files = await Promise.all([
+        load_dataset("training"),
+        load_dataset("testing"),
+    ]);
+    return {
+        training: files[0],
+        testing: files[1],
+    };
+}

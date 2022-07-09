@@ -450,6 +450,7 @@ dependencies = [
  "neural-network",
  "serde",
  "wasm-bindgen",
+ "wasm-bindgen-rayon",
  "wasm-bindgen-test",
  "web-sys",
 ]
@@ -769,6 +770,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "spmc"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02a8428da277a8e3a15271d79943e80ccc2ef254e78813a166a08d65e4c3ece5"
+
+[[package]]
 name = "syn"
 version = "1.0.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -815,6 +822,15 @@ name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+
+[[package]]
+name = "unpack"
+version = "0.1.0"
+dependencies = [
+ "gz",
+ "serde",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "wasi"
@@ -882,6 +898,18 @@ dependencies = [
  "syn",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
+]
+
+[[package]]
+name = "wasm-bindgen-rayon"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df87c67450805c305d3ae44a3ac537b0253d029153c25afc3ecd2edc36ccafb1"
+dependencies = [
+ "js-sys",
+ "rayon",
+ "spmc",
+ "wasm-bindgen",
 ]
 
 [[package]]

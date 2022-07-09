@@ -3,17 +3,20 @@
     import { afterUpdate, onDestroy, onMount } from "svelte";
     import DisplayTraining from "./DisplayTraining.svelte";
     import Settings from "./Settings.svelte";
-    import Canvas from "./Canvas.svelte";
+    import Canvas from "../../components/Canvas.svelte";
     // Rust Wasm
-    import { Kmeans } from "./worker/load";
-    import { get_black_image } from "@wasm/kmeans";
+    // import { Kmeans } from "./worker/load";
+    // import { get_black_image } from "@wasm/kmeans";
+    
+    import black_square from "/black.png";
+
     // Types
     import type { jsDataset } from "src/lib/mnist.dataset";
     import type { ClusterInfo } from "./cluster";
 
     export let js_dataset: jsDataset;
 
-    const kmeans = new Kmeans();
+    // const kmeans = new Kmeans();
 
     let num_k = 10;
     let min_change = 100.0;
@@ -26,18 +29,19 @@
     let canvas_imagedata: ImageData;
 
     onMount(async () => {
-        await kmeans.init();
-        await kmeans.load_dataset(js_dataset.data, js_dataset.label);
+        // await kmeans.init();
+        // await kmeans.load_dataset(js_dataset.data, js_dataset.label);
     });
     onDestroy(async () => {
-        await kmeans.free();
+        // await kmeans.free();
     });
 
     $: if (num_k && iter_count == 0) {
         display_clusters = [[]];
         for (let i = 0; i < num_k; i++) {
             display_clusters[0].push({
-                img: get_black_image(),
+                // img: get_black_image(),
+                img: black_square,
                 label: 0,
                 num_of_data: 0,
             });
@@ -49,28 +53,28 @@
         console.log(canvas_imagedata.data);
         console.log(new_img);
         
-        kmeans
-            .test_one_rgba(new_img)
-            .then((label) => {
-                console.log(label);
-            });
+        // kmeans
+        //     .test_one_rgba(new_img)
+        //     .then((label) => {
+        //         console.log(label);
+        //     });
     }
 
     let is_running: boolean = false;
     async function start_training(k: number) {
-        await kmeans.new(k);
-        display_clusters = [await kmeans.info()];
-        iter_count = 1;
-        is_running = true;
-        while (is_running) {
-            diff = await kmeans.step();
-            display_clusters = [...display_clusters, await kmeans.info()];
-            iter_count += 1;
-            if (diff < min_change || iter_count > max_iter) {
-                break;
-            }
-        }
-        is_running = false;
+        // await kmeans.new(k);
+        // display_clusters = [await kmeans.info()];
+        // iter_count = 1;
+        // is_running = true;
+        // while (is_running) {
+        //     diff = await kmeans.step();
+        //     display_clusters = [...display_clusters, await kmeans.info()];
+        //     iter_count += 1;
+        //     if (diff < min_change || iter_count > max_iter) {
+        //         break;
+        //     }
+        // }
+        // is_running = false;
     }
 
     function reset_kmeans() {

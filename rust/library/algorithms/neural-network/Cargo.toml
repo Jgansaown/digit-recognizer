@@ -15,7 +15,7 @@ itertools = "0.10.3"
 getrandom = { version="0.2", features = ["js"] }
 
 [features]
-default = ["multithread"]
+default = []
 multithread = ["rayon", "ndarray/rayon"]
 
 [dev-dependencies]
