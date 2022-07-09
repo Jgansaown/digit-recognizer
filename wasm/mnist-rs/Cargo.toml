@@ -8,9 +8,9 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-neural-network = { path = "../../library/algorithms/neural-network" }
-mnist = { path = "../../library/helper/mnist" }
-gz = { path = "../../library/helper/gz" }
+neural-network = { path = "../../libs/algorithms/neural-network" }
+mnist = { path = "../../libs/helper/mnist" }
+gz = { path = "../../libs/helper/gz" }
 ndarray = { version="0.15", default-features=false }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 serde = { version = "1.0", features = ["derive"] }

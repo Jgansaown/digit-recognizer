@@ -9,6 +9,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-gz = { path = "../../library/helper/gz" }
+gz = { path = "../../libs/helper/gz" }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 serde = { version = "1.0", features = ["derive"] }

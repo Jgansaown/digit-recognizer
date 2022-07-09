@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    # ML Algorithms Crates
+    "libs/algorithms/k-means",
+    "libs/algorithms/k-nearest",
+    "libs/algorithms/neural-network",
+    # Helper Crates
+    "libs/helper/gz",
+    "libs/helper/mnist",
+    "libs/helper/image-processing",
+    # WebAssembly Crates
+    "wasm/mnist-rs",
+    "wasm/unpack",
+]

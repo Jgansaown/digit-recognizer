@@ -1,3 +1,7 @@
+# ignore all
+*
+
+# select which to keep
 !dataset.json
 !download.py
 # MNIST data http://yann.lecun.com/exdb/mnist/

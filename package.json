@@ -1,0 +1,6 @@
+{
+    "name": "digit-recognizer",
+    "workspaces": [
+        "web"
+    ]
+}

@@ -1,30 +1,29 @@
 {
-  "name": "web",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
-  },
-  "dependencies": {
-    "@wasm/kmeans": "file:../wasm/target/pkg/kmeans",
-    "@wasm/mnist-rs": "file:../rust/target/pkg/mnist-rs",
-    "@wasm/unpack": "file:../rust/target/pkg/unpack",
-    "comlink": "^4.3.1",
-    "d3": "^7.5.0",
-    "wasm-feature-detect": "^1.2.11"
-  },
-  "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
-    "@tsconfig/svelte": "^2.0.1",
-    "svelte": "^3.44.0",
-    "svelte-check": "^2.2.7",
-    "svelte-preprocess": "^4.9.8",
-    "tslib": "^2.3.1",
-    "typescript": "^4.5.4",
-    "vite": "^2.8.0"
-  }
+    "name": "web",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "check": "svelte-check --tsconfig ./tsconfig.json"
+    },
+    "dependencies": {
+        "@wasm/mnist-rs": "file:../target/wasm/mnist-rs",
+        "@wasm/unpack": "file:../target/wasm/unpack",
+        "comlink": "^4.3.1",
+        "d3": "^7.5.0",
+        "wasm-feature-detect": "^1.2.11"
+    },
+    "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
+        "@tsconfig/svelte": "^2.0.1",
+        "svelte": "^3.44.0",
+        "svelte-check": "^2.2.7",
+        "svelte-preprocess": "^4.9.8",
+        "tslib": "^2.3.1",
+        "typescript": "^4.5.4",
+        "vite": "^2.8.0"
+    }
 }

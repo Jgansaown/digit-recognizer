@@ -1,25 +1,9 @@
-# Ignore all
-*
-# ...except for
+# VSCode
+.vscode
 
-# Git
-!.gitignore
+# Rust
+target/
 
-# Rust files
-!rust
-
-# Web files
-!web
-
-# Datasets
-!files
-
-# General files
-!README.md
-!Makefile
-
-# Github Action
-!.github
-!.github/workflows
-!.github/workflows/rust.yml
-!.github/workflows/deploy.yml
+# Web
+dist/
+node_modules/
