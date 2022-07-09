@@ -21,8 +21,8 @@ jobs:
 
       - name: Build WASM
         env:
-          TARGET: ./target/wasm
-          SRC: ./wasm
+          TARGET: ${{ github.workspace }}/target/wasm
+          SRC: ${{ github.workspace }}/wasm
         run: |
           # build wasm
           wasm-pack build --target web --release --scope wasm -d $TARGET/mnist-rs $SRC/mnist-rs
@@ -32,8 +32,8 @@ jobs:
 
       - name: Build site
         env:
-          WEB: ./web
-          DIST: ../dist
+          WEB: ${{ github.workspace }}/web
+          DIST: ${{ github.workspace }}/dist
         run: |
           npm install
           npx vite build $WEB --outDir $DIST --emptyOutDir --base=/${{ github.event.repository.name }}/
