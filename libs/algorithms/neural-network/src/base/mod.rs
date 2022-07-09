@@ -169,8 +169,8 @@ mod tests {
     use super::*;
     fn load_training() -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
         let dataset = mnist::Dataset::load_from_path(
-            "../../../../files/decoded/mnist-training-data",
-            "../../../../files/decoded/mnist-training-label",
+            "../../../files/decoded/mnist-training-data",
+            "../../../files/decoded/mnist-training-label",
         );
         let input: Vec<Vec<f32>> = dataset
             .iter()
@@ -188,8 +188,8 @@ mod tests {
     }
     fn load_testing() -> (Vec<Vec<f32>>, Vec<u8>) {
         let dataset = mnist::Dataset::load_from_path(
-            "../../../../files/decoded/mnist-test-data",
-            "../../../../files/decoded/mnist-test-label",
+            "../../../files/decoded/mnist-test-data",
+            "../../../files/decoded/mnist-test-label",
         );
         let input: Vec<Vec<f32>> = dataset
             .iter()

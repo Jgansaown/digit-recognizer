@@ -61,7 +61,7 @@ fn main() {
     let (test_input, test_label): (Vec<Array1<f32>>, Vec<u8>) = load_testing();
     let test_n = test_input.len();
     for i in 0..10000 {
-        let cost = network.par_stochastic_gradient_descent(&input, &label, 3.0, 1000);
+        let cost = network.stochastic_gradient_descent(&input, &label, 3.0, 1000);
         // println!("{:<4}: cost={:.5}", i, cost);
         let correct = network.test(&test_input, &test_label);
         println!("{:<4}: cost={:.5}, test={:>4}/{}", i, cost, correct, test_n);
