@@ -1,42 +1,93 @@
 use flate2::read::GzDecoder;
-use ndarray::Array2;
+use ndarray::{Array, Array1, Array2, ArrayView1, Dimension, StrideShape};
 use std::{
     error::Error,
     fmt::{Display, Formatter},
     io::Read,
 };
 
-pub struct Dataset<D, T> {
-    pub data: Array2<D>,
-    pub targets: Array2<T>,
+pub const DATA_SIZE: usize = 28 * 28;
+pub const DATA_TYPES: usize = 10;
+pub const TRAIN_NUM: usize = 60_000;
+pub const TEST_NUM: usize = 10_000;
+
+// const DATA_MAGIC_NUMBER: u32 = 2051;
+// const LABEL_MAGIC_NUMBER: u32 = 2049;
+
+pub struct DataView<'a> {
+    pub image: ArrayView1<'a, u8>,
+    pub label: &'a u8,
 }
 
-pub fn train() -> Dataset<u8, u8> {
-    let data = include_bytes!("../data/train-images-idx3-ubyte.gz");
-    let data: Array2<u8> = array_from_gz_idx_ubyte(&data[..], (60000, 28 * 28)).unwrap();
+/// Represents a MNIST Dataset
+///
+/// Owns the underlying data
+pub struct Dataset {
+    pub num: usize,
+    pub images: Array2<u8>,
+    pub labels: Array1<u8>,
+}
+impl Dataset {
+    /// MNIST Training Dataset
+    /// 
+    /// Number of examples: 60,000
+    pub fn training() -> Self {
+        let images = include_bytes!("../data/train-images-idx3-ubyte.gz");
+        let images: Array2<u8> =
+            array_from_gz_idx_ubyte(&images[..], (TRAIN_NUM, 28 * 28)).unwrap();
 
-    let targets = include_bytes!("../data/train-labels-idx1-ubyte.gz");
-    let targets: Array2<u8> = array_from_gz_idx_ubyte(&targets[..], (60000, 1)).unwrap();
+        let labels = include_bytes!("../data/train-labels-idx1-ubyte.gz");
+        let labels: Array1<u8> = array_from_gz_idx_ubyte(&labels[..], TRAIN_NUM).unwrap();
 
-    Dataset { data, targets }
+        Dataset {
+            num: TRAIN_NUM,
+            images,
+            labels,
+        }
+    }
+    /// MNIST Testing Dataset
+    /// 
+    /// Number of examples: 10,000
+    pub fn testing() -> Self {
+        let images = include_bytes!("../data/t10k-images-idx3-ubyte.gz");
+        let images: Array2<u8> = array_from_gz_idx_ubyte(&images[..], (TEST_NUM, 28 * 28)).unwrap();
+
+        let labels = include_bytes!("../data/t10k-labels-idx1-ubyte.gz");
+        let labels: Array1<u8> = array_from_gz_idx_ubyte(&labels[..], TEST_NUM).unwrap();
+
+        Dataset {
+            num: TEST_NUM,
+            images,
+            labels,
+        }
+    }
+
+    /// Panics if i >= self.num
+    pub fn at<'a>(&'a self, i: usize) -> DataView<'a> {
+        DataView {
+            image: self.images.row(i),
+            label: &self.labels[i],
+        }
+    }
 }
 
-pub fn t10k() -> Dataset<u8, u8> {
-    let data = include_bytes!("../data/t10k-images-idx3-ubyte.gz");
-    let data: Array2<u8> = array_from_gz_idx_ubyte(&data[..], (10000, 28 * 28)).unwrap();
 
-    let targets = include_bytes!("../data/t10k-labels-idx1-ubyte.gz");
-    let targets: Array2<u8> = array_from_gz_idx_ubyte(&targets[..], (10000, 1)).unwrap();
-
-    Dataset { data, targets }
-}
-
-fn array_from_gz_idx_ubyte<R: Read>(r: R, shape: (usize, usize)) -> Result<Array2<u8>, IdxError> {
+fn array_from_gz_idx_ubyte<R, Sh, D>(r: R, shape: Sh) -> Result<Array<u8, D>, IdxError>
+where
+    R: Read,
+    D: Dimension,
+    Sh: Into<StrideShape<D>>,
+{
     let file = GzDecoder::new(r);
     array_from_idx_ubyte(file, shape)
 }
 
-fn array_from_idx_ubyte<R: Read>(mut r: R, shape: (usize, usize)) -> Result<Array2<u8>, IdxError> {
+fn array_from_idx_ubyte<R, Sh, D>(mut r: R, shape: Sh) -> Result<Array<u8, D>, IdxError>
+where
+    R: Read,
+    D: Dimension,
+    Sh: Into<StrideShape<D>>,
+{
     let expected = [0, 0, 0x08, 0];
     let mut actual = [0, 0, 0, 0];
     r.read_exact(&mut actual).map_err(|e| IdxError::Io(e))?;
@@ -52,7 +103,7 @@ fn array_from_idx_ubyte<R: Read>(mut r: R, shape: (usize, usize)) -> Result<Arra
     let mut buf = Vec::new();
     r.read_to_end(&mut buf).map_err(|e| IdxError::Io(e))?;
 
-    Array2::from_shape_vec(shape, buf).map_err(|e| IdxError::Shape(e))
+    Array::from_shape_vec(shape, buf).map_err(|e| IdxError::Shape(e))
 }
 
 #[derive(Debug)]
