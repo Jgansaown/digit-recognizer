@@ -17,13 +17,13 @@ fn print_data_at(dataset: &Dataset, i: usize) {
     println!("{}", dataset.at(i).label);
 }
 
-fn print_image(data: ArrayView1<u8>) {
+fn print_image(data: ArrayView1<f64>) {
     let data = data.to_shape((28, 28)).unwrap();
     for i in 0..28usize {
         for j in 0..28usize {
             let v = data[(i, j)];
             match v {
-                _ if v > 128 => print!("⬜"),
+                _ if v > 128.0 => print!("⬜"),
                 _ => print!("⬛"),
             }
         }
