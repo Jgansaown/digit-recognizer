@@ -13,11 +13,15 @@ fn main() {
     // print_data_at(&testing, 10_000 - 1);
 
     let model = KMeans::with_default_param()
-        .n_clusters(20)
+        .n_clusters(10)
         .tolerance(1.0)
-        .max_iter(1000)
+        .max_iter(100)
         .train(&training);
 
+    println!("{:?}", model.centroids);
+    for centroid in model.centroids.outer_iter() {
+        print_image(centroid);
+    }
 
     // model.evaluate(&testing);
 

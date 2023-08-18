@@ -24,7 +24,8 @@ pub struct DataView<'a> {
 /// Owns the underlying data
 pub struct Dataset {
     pub num: usize,
-    pub images: Array2<f64>, // Shape: (num, 28*28)
+    pub size: usize,
+    pub images: Array2<f64>, // Shape: (num, size)
     pub labels: Array1<u8>,
 }
 impl Dataset {
@@ -41,6 +42,7 @@ impl Dataset {
 
         Dataset {
             num: TRAIN_NUM,
+            size: DATA_SIZE,
             images,
             labels,
         }
@@ -58,6 +60,7 @@ impl Dataset {
 
         Dataset {
             num: TEST_NUM,
+            size: DATA_SIZE,
             images,
             labels,
         }
