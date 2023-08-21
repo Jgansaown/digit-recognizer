@@ -1,34 +1,57 @@
+use std::time::Instant;
+
 use kmeans::KMeans;
 use mnist::Dataset;
-use ndarray::{Array1, ArrayView1};
+use ndarray::ArrayView1;
 
 fn main() {
     let training = Dataset::training();
-    // let testing = Dataset::testing();
+    let testing = Dataset::testing();
 
-    // print_data_at(&training, 0);
-    // print_data_at(&training, 60_000 - 1);
+    let param = KMeans::with_default_param()
+        .n_clusters(100)
+        .max_iter(1000)
+        .min_dist(0.001);
 
-    // print_data_at(&testing, 0);
-    // print_data_at(&testing, 10_000 - 1);
+    // let (model, duration) = {
+    //     let start = Instant::now();
+    //     let (i, dist, model) = param.train(&training);
+    //     let duration = start.elapsed();
 
-    let model = KMeans::with_default_param()
-        .n_clusters(10)
-        .tolerance(1.0)
-        .max_iter(100)
-        .train(&training);
+    //     println!("{}: {}", i, dist);
 
-    println!("{:?}", model.centroids);
-    for centroid in model.centroids.outer_iter() {
-        print_image(centroid);
-    }
+    //     (model, duration)
+    // };
 
-    // model.evaluate(&testing);
+    let (model, duration) = {
+        let start = Instant::now();
+        let mut iter = param.train_iter(&training);
+        for (i, dist) in &mut iter {
+            println!("{}: {}", i, dist);
+        }
+        let duration = start.elapsed();
 
-    // for i in 0..=255u8 {
-    //     let j: i8 = i.clone() as i8;
-    //     println!("{}, {}", i, j);
-    // }
+        (iter.into_model(), duration)
+    };
+
+    println!("Time elapsed in expensive_function() is: {:?}", duration);
+    
+    let correct = model.evaluate(&testing);
+
+    println!(
+        "Test Result: {} / {} = {}",
+        correct,
+        testing.num,
+        correct as f64 / testing.num as f64
+    );
+
+    let observation = training.at(0);
+    let predict = model.predict(&observation.image);
+    print_image(observation.image);
+    println!(
+        "Predicted Label: {:?}, Actual Label: {}",
+        predict, observation.label
+    );
 }
 
 fn print_data_at(dataset: &Dataset, i: usize) {

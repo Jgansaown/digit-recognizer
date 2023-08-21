@@ -2,6 +2,6 @@
 
 ## Project Structure
 
-- `/rust` - contains Rust library crates used by the WASM crates
-- `/wasm` - contains WASM crates
-- `/web` - contains Svelte frontend code
+- `/rust` - contains library crates used by the WASM, written in Rust
+- `/wasm` - contains WASM code, written in Rust
+- `/web` - contains frontend code, written in Svelte

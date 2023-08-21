@@ -1,154 +1,75 @@
-use mnist::Dataset;
-use ndarray::{Array1, Array2, ArrayView1, Ix2, ShapeBuilder, Zip};
-use ndarray_rand::{
-    rand::{rngs::SmallRng, SeedableRng},
-    rand_distr::Uniform,
-    RandomExt,
+mod algorithm;
+mod init;
+mod iter;
+
+use algorithm::{
+    calculate_centroids_info, calculate_centroids_label, find_nearest_centroid, update,
+    update_membership,
 };
+use init::KMeansInit;
+use iter::KMeansIter;
+use mnist::Dataset;
+use ndarray::{Array1, Array2, ArrayBase, Data, Ix1, Zip};
 use ndarray_stats::DeviationExt;
 
-pub struct KMeans {
-    pub param: KMeansHyperParameter,
-    pub centroids: Array2<f64>,  // Shape: (n_centroids, 28 * 28)
-    pub clusters: Array1<usize>, // which centroid each observation belong to
-
-    prev_centroids: Array2<f64>,
-    iter: usize,
-}
-impl KMeans {
-    pub fn with_param(
-        n_clusters: usize,
-        max_iter: usize,
-        tolerance: f64,
-        init: KMeansInit,
-    ) -> KMeansHyperParameter {
-        KMeansHyperParameter {
-            n_clusters,
-            max_iter,
-            tolerance,
-            init,
-        }
-    }
-
-    pub fn with_default_param() -> KMeansHyperParameter {
-        KMeans::with_param(10, 500, 0.01, KMeansInit::Random)
-    }
-
-    /// Evaluate the model
-    pub fn evaluate(&self, dataset: &Dataset) {
-        todo!("todo")
-    }
-
-    fn evaluate_1() {
-        todo!("todo")
-    }
-}
-// Private Interface
-impl KMeans {
-    fn train(param: KMeansHyperParameter, dataset: &Dataset) -> Self {
-        let mut model = KMeans {
-            centroids: KMeans::init_centroids(&param.init, (param.n_clusters, dataset.size)),
-            prev_centroids: Array2::zeros((param.n_clusters, dataset.size)),
-            clusters: Array1::zeros(dataset.num),
-            iter: 0,
-            param,
-        };
-
-        loop {
-            let info = model.step(dataset);
-
-            println!("{}: {}", info.iter, info.dist);
-
-            if info.dist < info.model.param.tolerance || info.iter >= info.model.param.max_iter {
-                break;
-            }
-        }
-
-        model
-    }
-
-    fn step<'a>(&'a mut self, dataset: &'a Dataset) -> KMeansStepInfo<'a> {
-        self.assign_to_cluster(dataset);
-        self.update_centroids(dataset);
-
-        let dist = self.centroids.l2_dist(&self.prev_centroids).unwrap();
-        self.iter += 1;
-        self.prev_centroids.assign(&self.centroids);
-
-        KMeansStepInfo {
-            iter: self.iter,
-            dist,
-            model: self,
-            dataset,
-        }
-    }
-
-    // Initialize centroids based on hyperparameter
-    fn init_centroids<Sh>(init: &KMeansInit, shape: Sh) -> Array2<f64>
-    where
-        Sh: ShapeBuilder<Dim = Ix2>,
-    {
-        let mut rng = SmallRng::seed_from_u64(1);
-        match init {
-            // KMeansInit::Random => Array2::random(shape, Uniform::new(0.0, 255.0)),
-            KMeansInit::Random => Array2::random_using(shape, Uniform::new(0.0, 255.0), &mut rng),
-        }
-    }
-
-    // Assign each observation to nearest cluster
-    fn assign_to_cluster(&mut self, dataset: &Dataset) {
-        for (image_i, image) in dataset.images.outer_iter().enumerate() {
-            // find closest centroid based on the l2 distance
-            let (nearest_centroid, _) = self
-                .centroids
-                .outer_iter()
-                .enumerate()
-                .map(|(i, centroid)| (i, centroid.l2_dist(&image).unwrap()))
-                .min_by(|(_, a), (_, b)| a.total_cmp(b))
-                .unwrap();
-
-            self.clusters[image_i] = nearest_centroid;
-        }
-    }
-
-    /// Recompute the centroids for each cluster
-    ///
-    /// using m_k-means instead of the standard algorithm (Lloyd's) to avoid
-    /// problem with empty clusters
-    ///
-    /// https://docs.rs/linfa-clustering/latest/linfa_clustering/struct.KMeans.html
-    /// https://www.researchgate.net/publication/228414762_A_Modified_k-means_Algorithm_to_Avoid_Empty_Clusters
-    fn update_centroids(&mut self, dataset: &Dataset) {
-        let mut counts: Array1<usize> = Array1::ones(self.centroids.nrows());
-
-        Zip::from(dataset.images.outer_iter())
-            .and(&self.clusters)
-            .for_each(|image, &centroid_i| {
-                let mut centroid = self.centroids.row_mut(centroid_i);
-                centroid += &image;
-                counts[centroid_i] += 1;
-            });
-
-        Zip::from(self.centroids.rows_mut())
-            .and(&counts)
-            .for_each(|mut centroid, &count| {
-                centroid /= count as f64;
-            });
-    }
-}
-
-pub struct KMeansHyperParameter {
+/// Hyperparameters for KMeans
+pub struct KMeansParam {
+    init: KMeansInit,
     n_clusters: usize,
     max_iter: usize,
-    tolerance: f64,
-    init: KMeansInit,
+    min_dist: f64,
 }
-impl KMeansHyperParameter {
-    /// Train the K Means model with `dataset`
-    pub fn train(self, dataset: &Dataset) -> KMeans {
-        KMeans::train(self, dataset)
+
+impl KMeansParam {
+    pub fn train(&self, dataset: &Dataset) -> (usize, f64, KMeans) {
+        let observations = &dataset.images;
+
+        let mut model = KMeans {
+            centroids: self.init.create_centroid((self.n_clusters, dataset.size)),
+            centroids_info: Array2::zeros((self.n_clusters, 10)),
+            centroids_label: Array1::from_elem(self.n_clusters, None),
+        };
+
+        let mut prev_centroids = model.centroids.clone();
+        let mut memberships = Array1::zeros(dataset.num);
+
+        let mut n_iter = 0;
+        let mut dist;
+        loop {
+            // Update centroids and memberships
+            update(&mut model.centroids, &mut memberships, &observations);
+
+            // Check stop condition
+            dist = prev_centroids.l2_dist(&model.centroids).unwrap();
+            n_iter += 1;
+
+            if dist < self.min_dist || n_iter >= self.max_iter {
+                break;
+            }
+
+            prev_centroids.assign(&model.centroids);
+        }
+
+        // Calculate centroid info
+        calculate_centroids_info(&mut model.centroids_info, &memberships, &dataset.labels);
+        calculate_centroids_label(&mut model.centroids_label, &model.centroids_info);
+
+        (n_iter, dist, model)
     }
 
+    pub fn train_iter<'a>(&self, dataset: &'a Dataset) -> KMeansIter<'a> {
+        KMeansIter::new(
+            self.init.create_centroid((self.n_clusters, dataset.size)),
+            dataset,
+            self.max_iter,
+            self.min_dist,
+        )
+    }
+
+    pub fn init(mut self, init: KMeansInit) -> Self {
+        self.init = init;
+        self
+    }
     pub fn n_clusters(mut self, n_clusters: usize) -> Self {
         self.n_clusters = n_clusters;
         self
@@ -157,24 +78,120 @@ impl KMeansHyperParameter {
         self.max_iter = max_iter;
         self
     }
-    pub fn tolerance(mut self, tolerance: f64) -> Self {
-        self.tolerance = tolerance;
-        self
-    }
-    pub fn init(mut self, init: KMeansInit) -> Self {
-        self.init = init;
+    pub fn min_dist(mut self, min_dist: f64) -> Self {
+        self.min_dist = min_dist;
         self
     }
 }
 
-pub enum KMeansInit {
-    Random,
-    // TODO: KMeansPlusPlus,
+pub struct KMeans {
+    // Shape: (n_clusters, n_features = data_size = 28 * 28)
+    centroids: Array2<f64>,
+    // Shape: (n_clusters, 10)
+    centroids_info: Array2<usize>,
+    // Shape: (n_clusters), Value: (label, num_in_cluster)
+    centroids_label: Array1<Option<usize>>,
 }
 
-pub struct KMeansStepInfo<'a> {
-    iter: usize,
-    dist: f64,
-    model: &'a KMeans,
-    dataset: &'a Dataset,
+impl KMeans {
+    /// Default parameters
+    /// ```ignore
+    /// KMeansParam {
+    ///     init: KMeansInit::Random,
+    ///     n_clusters: 10,
+    ///     data_size: mnist::DATA_SIZE,
+    ///     max_iter: 100,
+    ///     min_dist: 10.0,
+    /// }
+    /// ```
+    pub fn with_default_param() -> KMeansParam {
+        KMeansParam {
+            init: KMeansInit::Random,
+            n_clusters: 10,
+            max_iter: 100,
+            min_dist: 10.0,
+        }
+    }
+
+    /// Evaluate the model and returns the number of correct predictions
+    pub fn evaluate(&self, dataset: &Dataset) -> usize {
+        let mut memberships = Array1::zeros(dataset.num);
+        update_membership(&mut memberships, &self.centroids, &dataset.images);
+
+        Zip::from(&dataset.labels)
+            .and(&memberships)
+            .fold(0, |acc, &target, &predict| {
+                match self.centroids_label[predict] {
+                    Some(predict) if predict == target as usize => acc + 1,
+                    _ => acc,
+                }
+            })
+    }
+
+    /// Predicts the label of the input observation
+    pub fn predict(&self, observation: &ArrayBase<impl Data<Elem = f64>, Ix1>) -> Option<usize> {
+        let (membership, _) = find_nearest_centroid(&self.centroids, observation);
+        self.centroids_label[membership]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ndarray::Array1;
+    use ndarray_rand::{rand_distr::Uniform, RandomExt};
+
+    use super::*;
+
+    #[test]
+    fn test_hyper_parameter() {
+        let param = KMeans::with_default_param()
+            .init(KMeansInit::Random)
+            .n_clusters(10)
+            .max_iter(100)
+            .min_dist(0.01);
+
+        assert!(matches!(param.init, KMeansInit::Random));
+        assert_eq!(param.n_clusters, 10);
+        assert_eq!(param.max_iter, 100);
+        assert_eq!(param.min_dist, 0.01);
+    }
+
+    #[test]
+    fn test_train() {
+        let dataset = Dataset {
+            num: 10,
+            size: 10,
+            images: Array2::random((10, 10), Uniform::new(0.0, 255.0)),
+            labels: Array1::random(10, Uniform::new(0, 10)),
+        };
+        let (_, _, model) = KMeans::with_default_param()
+            .init(KMeansInit::Random)
+            .n_clusters(10)
+            .max_iter(100)
+            .min_dist(0.01)
+            .train(&dataset);
+
+        let _correct = model.evaluate(&dataset);
+    }
+
+    #[test]
+    fn test_train_iter() {
+        let dataset = Dataset {
+            num: 10,
+            size: 10,
+            images: Array2::random((10, 10), Uniform::new(0.0, 255.0)),
+            labels: Array1::random(10, Uniform::new(0, 10)),
+        };
+        let mut iter = KMeans::with_default_param()
+            .init(KMeansInit::Random)
+            .n_clusters(10)
+            .max_iter(100)
+            .min_dist(0.01)
+            .train_iter(&dataset);
+
+        for _step in &mut iter {}
+
+        let model = iter.into_model();
+        let _correct = model.evaluate(&dataset);
+    }
 }
