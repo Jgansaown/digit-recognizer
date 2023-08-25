@@ -3,4 +3,5 @@
 members = [
     "rust/mnist",
     "rust/kmeans",
+    "rust/knn",
 ]

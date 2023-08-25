@@ -141,6 +141,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "knn"
+version = "0.1.0"
+dependencies = [
+ "mnist",
+ "ndarray",
+ "ndarray-stats",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"

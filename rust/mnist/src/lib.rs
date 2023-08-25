@@ -1,9 +1,10 @@
 use flate2::read::GzDecoder;
-use ndarray::{Array, Array1, Array2, ArrayView1, Dimension, StrideShape};
+use ndarray::{Array, Array1, Array2, ArrayBase, ArrayView1, Data, Dimension, Ix1, StrideShape};
 use std::{
     error::Error,
     fmt::{Display, Formatter},
     io::Read,
+    slice::SliceIndex,
 };
 
 pub const DATA_SIZE: usize = 28 * 28;
@@ -22,6 +23,7 @@ pub struct DataView<'a> {
 /// Represents a MNIST Dataset
 ///
 /// Owns the underlying data
+#[derive(Clone)]
 pub struct Dataset {
     pub num: usize,
     pub size: usize,
@@ -71,6 +73,24 @@ impl Dataset {
         DataView {
             image: self.images.row(i),
             label: &self.labels[i],
+        }
+    }
+}
+
+pub struct DatasetIter<'a> {
+    inner: &'a Dataset,
+    i: usize,
+}
+impl<'a> Iterator for DatasetIter<'a> {
+    type Item = DataView<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= self.inner.num {
+            None
+        } else {
+            let ret = self.inner.at(self.i);
+            self.i += 1;
+            Some(ret)
         }
     }
 }
