@@ -11,6 +11,6 @@ rayon = ["ndarray/rayon"]
 
 [dependencies]
 mnist = { path = "../mnist" }
-ndarray = { version = "0.15" }
-ndarray-rand = { version = "0.14" }
-ndarray-stats = { version = "0.5" }
+ndarray = { workspace = true }
+ndarray-rand = { workspace = true }
+ndarray-stats = { workspace = true }

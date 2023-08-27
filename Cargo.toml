@@ -5,3 +5,8 @@ members = [
     "rust/kmeans",
     "rust/knn",
 ]
+
+[workspace.dependencies]
+ndarray = { version = "0.15" }
+ndarray-rand = { version = "0.14" }
+ndarray-stats = { version = "0.5" }

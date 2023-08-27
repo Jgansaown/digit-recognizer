@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 flate2 = { version = "1.0" }
-ndarray = { version = "0.15" }
+ndarray = { workspace = true }
