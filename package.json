@@ -1,0 +1,7 @@
+{
+    "name": "digit-recognizer",
+    "workspaces": [
+        "web",
+        "target/wasm/pkg"
+    ]
+}

@@ -5,9 +5,14 @@ members = [
     "rust/kmeans",
     "rust/knn",
     "rust/perceptron",
+    "wasm",
 ]
 
 [workspace.dependencies]
 ndarray = { version = "0.15" }
 ndarray-rand = { version = "0.14" }
 ndarray-stats = { version = "0.5" }
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"
