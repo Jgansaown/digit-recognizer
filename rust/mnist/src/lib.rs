@@ -1,10 +1,9 @@
 use flate2::read::GzDecoder;
-use ndarray::{Array, Array1, Array2, ArrayBase, ArrayView1, Data, Dimension, Ix1, StrideShape};
+use ndarray::{Array, Array1, Array2, ArrayView1, Axis, Dimension, StrideShape};
 use std::{
     error::Error,
     fmt::{Display, Formatter},
     io::Read,
-    slice::SliceIndex,
 };
 
 pub const DATA_SIZE: usize = 28 * 28;
@@ -74,6 +73,25 @@ impl Dataset {
             image: self.images.row(i),
             label: &self.labels[i],
         }
+    }
+
+    /// shape: (n_observations, n_inputs)
+    pub fn inputs(&self) -> &Array2<f64> {
+        &self.images
+    }
+
+    /// shape: (n_observations, n_outputs)
+    pub fn targets(&self) -> Array2<f64> {
+        let mut target: Array2<f64> = Array2::zeros((self.num, 10));
+
+        target
+            .axis_iter_mut(Axis(0))
+            .zip(&self.labels)
+            .for_each(|(mut t, &l)| {
+                t[l as usize] = 1.0;
+            });
+
+        target
     }
 }
 

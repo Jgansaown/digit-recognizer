@@ -286,6 +286,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "perceptron"
+version = "0.1.0"
+dependencies = [
+ "mnist",
+ "ndarray",
+ "ndarray-stats",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"

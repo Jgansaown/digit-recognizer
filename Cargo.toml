@@ -4,6 +4,7 @@ members = [
     "rust/mnist",
     "rust/kmeans",
     "rust/knn",
+    "rust/perceptron",
 ]
 
 [workspace.dependencies]
