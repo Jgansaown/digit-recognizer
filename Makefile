@@ -5,7 +5,7 @@ wasm-build:
 		--target web \
 		--scope wasm \
 		--out-dir ../target/wasm/pkg \
-		--dev \
+		--release \
 		./wasm
 
 web-dev:

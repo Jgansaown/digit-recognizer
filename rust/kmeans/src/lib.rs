@@ -4,7 +4,7 @@ mod iter;
 
 use algorithm::{
     calculate_centroids_info, calculate_centroids_label, find_nearest_centroid, update,
-    update_membership,
+    update_centroids, update_membership,
 };
 use init::KMeansInit;
 use iter::KMeansIter;
@@ -111,6 +111,38 @@ impl KMeans {
             max_iter: 100,
             min_dist: 10.0,
         }
+    }
+
+    pub fn new(n_clusters: usize, data_size: usize) -> Self {
+        KMeans {
+            centroids: KMeansInit::Random.create_centroid((n_clusters, data_size)),
+            centroids_info: Array2::zeros((n_clusters, 10)),
+            centroids_label: Array1::from_elem(n_clusters, None),
+        }
+    }
+
+    pub fn step(&mut self, dataset: &Dataset) -> f64 {
+        // 1. Assignment Step: Assign observations to cluster with nearest centroid
+        let mut memberships = Array1::zeros(dataset.num);
+        update_membership(&mut memberships, &self.centroids, &dataset.images);
+
+        // 2. Update Step: Recalculate centroid for each cluster
+        update_centroids(&mut self.centroids, &dataset.images, &memberships);
+
+        // Calculate centroid info
+        calculate_centroids_info(&mut self.centroids_info, &memberships, &dataset.labels);
+        calculate_centroids_label(&mut self.centroids_label, &self.centroids_info);
+
+        let err = Zip::from(&dataset.labels)
+            .and(&memberships)
+            .fold(0.0, |acc, &target, &predict| {
+                match self.centroids_label[predict] {
+                    Some(predict) if predict != target as usize => acc + 1.0,
+                    _ => acc,
+                }
+            });
+        
+        err / dataset.num as f64
     }
 
     /// Evaluate the model and returns the number of correct predictions

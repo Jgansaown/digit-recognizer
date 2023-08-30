@@ -1,8 +1,13 @@
 <script lang="ts">
-    import { greet } from "@wasm/wasm";
     import { fabric } from "fabric";
     import { Chart } from "chart.js/auto";
     import { onMount } from "svelte";
+
+    import { WASMWorker } from "./worker/wasm";
+
+    const worker = new WASMWorker();
+
+    let training_chart: Chart<"line", number[], number>;
 
     onMount(() => {
         //
@@ -26,16 +31,14 @@
         });
 
         //
-        const training_data = Array.from({ length: 100 }, (_, i) => 1 / i);
-        const training_chart = new Chart("training_chart", {
+        // const training_data = Array.from({ length: 100 }, (_, i) => 1 / i);
+        training_chart = new Chart("training_chart", {
             type: "line",
             data: {
-                labels: training_data.map((_, i) => i),
+                labels: [],
                 datasets: [
-                    {
-                        label: "Error Rate",
-                        data: training_data,
-                    },
+                    { label: "Training Error Rate", data: [] },
+                    { label: "Testing Error Rate", data: [] },
                 ],
             },
         });
@@ -60,6 +63,30 @@
         learning_rate: 0.1,
         max_iter: 10,
         min_error_rate: 0.001,
+    };
+
+    async function update_training_chart(label: number, a: number, b: number) {
+        training_chart.data.labels?.push(label);
+        training_chart.data.datasets.at(0)?.data.push(a);
+        training_chart.data.datasets.at(1)?.data.push(b);
+        training_chart.update();
+    }
+
+    async function start_training() {
+        worker.start_training(selected_model, kmeans_param);
+    }
+    async function stop_training() {
+        worker.stop_training();
+    }
+    worker.onstep = (data: {
+        i: number;
+        training_err: number;
+        testing_err: number;
+    }) => {
+        console.log(
+            `[main][step]: ${data.i}: train: ${data.training_err}, test: ${data.testing_err}`
+        );
+        update_training_chart(data.i, data.training_err, data.testing_err);
     };
 </script>
 
@@ -145,8 +172,9 @@
     {/if}
 
     <div class="grid">
-        <button id="start">Start Training</button>
-        <button id="stop">Stop</button>
+        <button on:click={start_training}>Start Training</button>
+        <button on:click={stop_training}>Stop Training</button>
+        <button>Save Model</button>
     </div>
 
     <canvas id="training_chart" />

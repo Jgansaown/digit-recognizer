@@ -11,6 +11,12 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
+mnist = { path = "../rust/mnist" }
+kmeans = { path = "../rust/kmeans" }
+knn = { path = "../rust/knn" }
+perceptron = { path = "../rust/perceptron" }
+getrandom = { version = "0.2.10", features = ["js"] }
+
 wasm-bindgen = "0.2.84"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
