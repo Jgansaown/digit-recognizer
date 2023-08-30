@@ -5,3 +5,8 @@ to integrate rust wasm with svelte
 2. in svelte's package.json, specify the wasm as a dependencies
 3. in main.ts, load the wasm before svelte
 4. now you can use wasm function from svelte
+
+
+thanks to 
+https://github.com/dsegovia90/wasm-vite-svelte-monorepo
+for helping figure this stuff out
