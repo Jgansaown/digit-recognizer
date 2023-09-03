@@ -1,34 +1,7 @@
-mod dataset;
-mod kmeans;
-mod knn;
-mod perceptron;
-
-pub use crate::dataset::Dataset;
-pub use crate::kmeans::KMeans;
-pub use crate::knn::KNearestNeighbors;
-pub use crate::perceptron::Perceptron;
+pub mod dataset;
+pub mod models;
 
 use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-pub struct TemplateModel();
-
-#[wasm_bindgen]
-impl TemplateModel {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        todo!()
-    }
-    pub fn step(&mut self, dataset: &Dataset) -> f64 {
-        todo!()
-    }
-    pub fn evaluate(&self, dataset: &Dataset) -> f64 {
-        todo!()
-    }
-    pub fn predict(&self) {
-        todo!()
-    }
-}
 
 #[wasm_bindgen]
 pub fn set_panic_hook() {

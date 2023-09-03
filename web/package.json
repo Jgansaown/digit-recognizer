@@ -10,7 +10,7 @@
         "check": "svelte-check --tsconfig ./tsconfig.json"
     },
     "dependencies": {
-        "@wasm/wasm": "^0.1.0",
+        "@wasm/mnist": "^0.1.0",
         "chart.js": "4.4.0",
         "fabric": "5.3.0"
     },
