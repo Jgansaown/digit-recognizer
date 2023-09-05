@@ -43,8 +43,11 @@ impl KNearestNeighbors {
         n_error as f64 / dataset.n_observations() as f64
     }
 
-    pub fn predict(&self) {
-        todo!()
+    pub fn predict(&self, observation: Vec<f64>) -> Vec<f64> {
+        let observation = Array1::from_vec(observation);
+        let counts = self.calculate_prediction(&observation).0;
+
+        counts.mapv(|v| v as f64 / self.k as f64).into_raw_vec()
     }
 }
 

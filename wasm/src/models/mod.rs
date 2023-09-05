@@ -26,15 +26,24 @@ impl TemplateModel {
         todo!()
     }
 
+    #[allow(unused_variables)]
     pub fn step(&mut self, dataset: &Dataset) -> f64 {
         todo!()
     }
 
+    #[allow(unused_variables)]
     pub fn evaluate(&self, dataset: &Dataset) -> f64 {
         todo!()
     }
 
-    pub fn predict(&self) {
+    #[allow(unused_variables)]
+    pub fn predict(&self, observation: Vec<f64>) -> Vec<f64> {
         todo!()
+    }
+}
+
+impl Default for TemplateModel {
+    fn default() -> Self {
+        Self::new()
     }
 }

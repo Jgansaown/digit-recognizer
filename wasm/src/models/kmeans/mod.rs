@@ -4,8 +4,8 @@ mod init;
 use crate::dataset::Dataset;
 use crate::models::Model;
 use algorithm::{
-    calculate_centroids_info, calculate_centroids_label, calculate_error_rate, update_centroids,
-    update_membership,
+    calculate_centroids_info, calculate_centroids_label, calculate_error_rate,
+    find_nearest_centroid, update_centroids, update_membership,
 };
 use init::KMeansInit;
 use ndarray::{Array1, Array2};
@@ -58,8 +58,15 @@ impl KMeans {
         calculate_error_rate(&self.centroids_label, &memberships, dataset.labels())
     }
 
-    pub fn predict(&self) {
-        todo!()
+    pub fn predict(&self, observation: Vec<f64>) -> Vec<f64> {
+        let observation = Array1::from_vec(observation);
+        let membership = find_nearest_centroid(&self.centroids, &observation).0;
+        let cluster_info = self.centroids_info.row(membership);
+        let num_in_cluster = cluster_info.sum();
+
+        cluster_info
+            .map(|&v| v as f64 / num_in_cluster as f64)
+            .into_raw_vec()
     }
 }
 

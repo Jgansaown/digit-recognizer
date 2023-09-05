@@ -30,8 +30,9 @@ impl Perceptron {
         self.calculate_error(&difference) / dataset.n_observations() as f64
     }
 
-    pub fn predict(&self) {
-        todo!()
+    pub fn predict(&self, observation: Vec<f64>) -> Vec<f64> {
+        let observation = Array2::from_shape_vec((1, observation.len()), observation).unwrap();
+        self.feed_forward(&observation).into_raw_vec()
     }
 }
 
