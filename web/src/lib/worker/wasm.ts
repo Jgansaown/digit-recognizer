@@ -9,8 +9,10 @@ import {
  */
 export class WASMWorker {
     pipe: WorkerPipe;
-
-    onstep_cb?: (data: any) => void;
+    callbacks: {
+        step?: (data: any) => void;
+        prediction?: (data: any) => void;
+    } = {};
 
     constructor() {
         this.pipe = get_worker_pipe(
@@ -20,8 +22,13 @@ export class WASMWorker {
         );
 
         this.pipe.handleCommand(({ cmd, data }) => {
-            if (cmd == "step") {
-                this.onstep_cb?.call(null, data);
+            switch (cmd) {
+                case "step":
+                case "prediction":
+                    this.callbacks[cmd]?.call(null, data);
+                    break;
+                default:
+                    break;
             }
         });
     }
@@ -35,7 +42,15 @@ export class WASMWorker {
         this.pipe.sendCommand("stop_training", null);
     }
 
-    public set onstep(cb: (data: any) => void) {
-        this.onstep_cb = cb;
+    set onstep(cb: (data: any) => void) {
+        this.callbacks.step = cb;
+    }
+
+    predict(data: Float64Array) {
+        this.pipe.sendCommandTransfer("predict", data);
+    }
+
+    set onprediction(cb: (data: any) => void) {
+        this.callbacks.prediction = cb;
     }
 }

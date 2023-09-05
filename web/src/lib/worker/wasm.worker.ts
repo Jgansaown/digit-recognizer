@@ -68,6 +68,13 @@ class Model {
         clearInterval(this.interval_id);
         this.interval_id = undefined;
     }
+
+    predict(data: Float64Array) {
+        if (this.model) {
+            const prediction = this.model.predict(data);
+            this.pipe.sendCommandTransfer("prediction", prediction);
+        }
+    }
 }
 
 async function initialize() {
@@ -78,7 +85,7 @@ async function initialize() {
 
     set_panic_hook();
 
-    const pipe = get_worker_pipe(self);
+    const pipe = get_worker_pipe(self as DedicatedWorkerGlobalScope);
     const model = new Model(pipe);
 
     const dataset = {
@@ -97,6 +104,12 @@ async function initialize() {
             case "stop_training":
                 console.log("[Worker] Received stop training event");
                 model.stop_training();
+
+                break;
+            case "predict":
+                console.log("[Worker] Received predict event");
+                console.log(`[Worker] data.length: ${data.length}`);
+                model.predict(data);
 
                 break;
             default:
