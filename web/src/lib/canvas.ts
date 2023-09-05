@@ -55,8 +55,8 @@ function find_cropped_image(img: ImageData) {
 
 // https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems
 // https://en.wikipedia.org/wiki/Luma_(video)
-export function rgba_to_grayscale(rgba: Uint8ClampedArray): Uint8Array {
-    let gray = new Uint8Array(rgba.length / 4);
+export function rgba_to_grayscale(rgba: Uint8ClampedArray): Float64Array {
+    let gray = new Float64Array(rgba.length / 4);
 
     // Data is stored as [r0,g0,b0,a0, ... r[n],g[n],b[n],a[n]] where n is number of pixels.
     for (let i = 0; i < rgba.length; i += 4) {

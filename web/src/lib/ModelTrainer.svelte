@@ -6,7 +6,7 @@
     import { onMount } from "svelte";
     import { fabric } from "fabric";
     import { Chart } from "chart.js/auto";
-    import { create_training_chart } from "./chart";
+    import { create_prediction_chart, create_training_chart } from "./chart";
     import { WASMWorker } from "./worker/wasm";
     import { cropImageFromCanvas, rgba_to_grayscale } from "./canvas";
 
@@ -40,29 +40,16 @@
         reset(): void;
     };
     let canvas: fabric.Canvas;
+    let probability_chart: {
+        chart: Chart<"bar", number[], number>;
+        update(data: number[]): void;
+        clear(): void;
+    };
 
     onMount(() => {
         training_chart = create_training_chart("training_chart");
 
-        //
-        const probability_data = [
-            0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-        ];
-        const probability_chart = new Chart("probability_chart", {
-            type: "bar",
-            data: {
-                labels: probability_data.map((_, i) => i),
-                datasets: [
-                    {
-                        label: "Probability",
-                        data: probability_data,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-            },
-        });
+        probability_chart = create_prediction_chart("probability_chart");
 
         canvas = new fabric.Canvas("canvas", {
             isDrawingMode: true,
@@ -82,8 +69,8 @@
                 (canvas.freeDrawingBrush as any)._finalizeAndAddPath();
                 const data = save_canvas();
                 const gray = rgba_to_grayscale(data);
-                
-                // TODO: worker.predict(gray);
+
+                worker.predict(gray);
 
                 is_timeout = false;
             }, 50);
@@ -155,6 +142,8 @@
         main.clearRect(0, 0, main.canvas.width, main.canvas.height);
         cropped.clearRect(0, 0, cropped.canvas.width, cropped.canvas.height);
         scaled.clearRect(0, 0, scaled.canvas.width, scaled.canvas.height);
+
+        probability_chart.clear();
     }
     function save_canvas() {
         const main = (
@@ -195,6 +184,13 @@
 
         return data;
     }
+
+    worker.onprediction = (data) => {
+        // console.log(data);
+        probability_chart.update(data);
+
+        console.log(probability_chart.chart.data.datasets[0].data);
+    };
 </script>
 
 <label>
