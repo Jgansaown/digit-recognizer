@@ -51,11 +51,11 @@ class Model {
 
         this.interval_id = setInterval(() => {
             const training_err = this.model?.step(dataset.training);
-            const testing_err = this.model?.evaluate(dataset.testing);
+            // const testing_err = this.model?.evaluate(dataset.testing);
 
             i++;
 
-            this.pipe.sendCommand("step", { i, training_err, testing_err });
+            this.pipe.sendCommand("step", { i, training_err, testing_err: 0 });
 
             if (!("max_iter" in data.param) || i >= data.param.max_iter) {
                 // done training
@@ -97,7 +97,11 @@ async function initialize() {
         switch (cmd) {
             case "start_training":
                 console.log("[Worker] Received start training event");
-                console.table(data);
+                console.log(
+                    `[Worker] Training ${
+                        data.type
+                    } with param: ${JSON.stringify(data.param)}`
+                );
                 model.start_training(data, dataset);
 
                 break;
@@ -108,7 +112,6 @@ async function initialize() {
                 break;
             case "predict":
                 console.log("[Worker] Received predict event");
-                console.log(`[Worker] data.length: ${data.length}`);
                 model.predict(data);
 
                 break;

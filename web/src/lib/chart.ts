@@ -1,20 +1,57 @@
-import { Chart, type ChartItem } from "chart.js/auto";
+import {
+    Chart,
+    LineController,
+    LineElement,
+    PointElement,
+    BarController,
+    BarElement,
+    LinearScale,
+    CategoryScale,
+    Colors,
+    Tooltip,
+    Title,
+    SubTitle,
+    Decimation,
+    type ChartItem,
+} from "chart.js";
+// import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
+
+Chart.register(
+    LineController,
+    LinearScale,
+    LineElement,
+    PointElement,
+    BarController,
+    BarElement,
+    CategoryScale,
+    Colors,
+    Tooltip,
+    Title,
+    SubTitle,
+    Decimation
+);
+
+function getStyle(property: string): string {
+    return getComputedStyle(document.body).getPropertyValue(property);
+}
+
+Chart.defaults.color = () => getStyle("--color");
+Chart.defaults.borderColor = () => getStyle("--muted-color");
 
 export function create_training_chart(item: ChartItem) {
     const chart: Chart<"line", number[], number> = new Chart(item, {
         type: "line",
         data: {
             labels: [],
-            datasets: [
-                { label: "Training Dataset", data: [] },
-                { label: "Testing Dataset", data: [] },
-            ],
+            datasets: [{ label: "Training Dataset", data: [] }],
         },
         options: {
+            responsive: true,
             scales: {
                 x: {
                     type: "linear",
-                    min: 0,
+                    min: 1,
+                    suggestedMax: 10,
                     title: {
                         display: true,
                         text: "# of Iteration",
@@ -28,6 +65,16 @@ export function create_training_chart(item: ChartItem) {
                         display: true,
                         text: "Error Rate",
                     },
+                },
+            },
+            plugins: {
+                title: {
+                    text: "Training Progress",
+                    display: true,
+                },
+                subtitle: {
+                    text: "Iteration: 0, Error Rate: 100%",
+                    display: true,
                 },
             },
         },
@@ -59,12 +106,13 @@ export function create_prediction_chart(item: ChartItem) {
             responsive: true,
             scales: {
                 x: {
-                    type: "linear",
-                    min: 0,
-                    max: 9,
+                    type: "category",
                     title: {
                         display: true,
                         text: "Digit",
+                    },
+                    grid: {
+                        display: false,
                     },
                 },
                 y: {
@@ -74,6 +122,9 @@ export function create_prediction_chart(item: ChartItem) {
                     title: {
                         display: true,
                         text: "Confidence",
+                    },
+                    grid: {
+                        display: false,
                     },
                 },
             },
@@ -92,3 +143,6 @@ export function create_prediction_chart(item: ChartItem) {
         },
     };
 }
+
+// reexport Chart
+export { Chart } from "chart.js";

@@ -1,28 +1,52 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { Chart } from "./chart";
 
     import GithubLogo from "../assets/github-logo.svelte";
     import ThemeIcon from "../assets/theme-icon.svelte";
 
-    let current_theme = "dark";
+    let current_theme: "dark" | "light" = "dark";
 
     onMount(() => {
-        current_theme = window.matchMedia("(prefers-color-scheme: dark)")
-            .matches
-            ? "dark"
-            : "light";
-
-        document.documentElement.setAttribute("data-theme", current_theme);
+        // see if theme is cached in localStorage
+        const local_theme = get_theme_from_localStorage();
+        if (local_theme != undefined) {
+            current_theme = local_theme;
+        } else {
+            current_theme = get_preferred_theme();
+        }
+        set_theme(current_theme);
     });
 
     function switch_theme() {
         current_theme = current_theme == "dark" ? "light" : "dark";
+        set_theme(current_theme);
+    }
 
-        document.documentElement.setAttribute("data-theme", current_theme);
+    function set_theme(theme: "dark" | "light") {
+        document.documentElement.setAttribute("data-theme", theme);
+        window.localStorage.setItem("data-theme", theme);
+
+        // update chart to refresh the theme
+        Object.values(Chart.instances).forEach((chart) => chart.update());
+    }
+    function get_theme_from_localStorage(): "dark" | "light" | undefined {
+        if (typeof window.localStorage != "undefined") {
+            const theme = window.localStorage.getItem("data-theme");
+            if (theme == "dark" || theme == "light") {
+                return theme;
+            }
+        }
+        return undefined;
+    }
+    function get_preferred_theme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
     }
 </script>
 
-<nav style="margin: 0 1em">
+<nav>
     <ul>
         <li><strong>Digit Recognizer</strong></li>
     </ul>
@@ -43,3 +67,9 @@
         </li>
     </ul>
 </nav>
+
+<style>
+    nav {
+        margin: 0 1em;
+    }
+</style>

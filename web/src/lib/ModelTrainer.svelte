@@ -5,8 +5,11 @@
 
     import { onMount } from "svelte";
     import { fabric } from "fabric";
-    import { Chart } from "chart.js/auto";
-    import { create_prediction_chart, create_training_chart } from "./chart";
+    import {
+        create_prediction_chart,
+        create_training_chart,
+        type Chart,
+    } from "./chart";
     import { WASMWorker } from "./worker/wasm";
     import { cropImageFromCanvas, rgba_to_grayscale } from "./canvas";
 
@@ -108,19 +111,13 @@
         console.log(
             `[main][step]: ${data.i}: train: ${data.training_err}, test: ${data.testing_err}`
         );
-        training_chart.append([data.training_err, data.testing_err], data.i);
-    };
+        training_chart.append([data.training_err, 0], data.i);
 
-    $: if (
-        training_chart &&
-        training_chart.chart.options.scales?.x != undefined
-    ) {
-        let param = state.param[state.selected];
-        if ("max_iter" in param) {
-            training_chart.chart.options.scales.x.max = param.max_iter;
-            training_chart.chart.update();
+        if (training_chart.chart.options.plugins?.subtitle?.text) {
+            const err = Math.trunc(data.training_err * 100);
+            training_chart.chart.options.plugins.subtitle.text = `Iteration: ${data.i}, Error Rate: ${err}%`;
         }
-    }
+    };
 
     function clear_canvas() {
         canvas.clear();
@@ -186,35 +183,63 @@
     }
 
     worker.onprediction = (data) => {
-        // console.log(data);
         probability_chart.update(data);
-
-        console.log(probability_chart.chart.data.datasets[0].data);
     };
 </script>
 
-<label>
-    Select a machine learning model to train:
-    <select bind:value={state.selected}>
-        <option value="kmeans">K Means</option>
-        <option value="knn">K Nearest Neighbors</option>
-        <option value="perceptron">
-            Perceptron (1-layer Neural Network)
-        </option>
-    </select>
-</label>
+<header>
+    <h1>Train your own AI locally in your browser!</h1>
+    <label>
+        Select a model type to train:
+        <select bind:value={state.selected}>
+            <option value="kmeans">K Means Clustering</option>
+            <option value="knn">K Nearest Neighbors</option>
+            <option value="perceptron">
+                Perceptron (1-layer Neural Network)
+            </option>
+        </select>
+    </label>
+</header>
 
 {#if state.selected == "kmeans"}
-    <h3>K Means Hyperparameters</h3>
+    <h3>K Means Clustering</h3>
+    <p>
+        The K Means clustering is an algorithm that groups data into <i>K</i> number
+        of clusters by assigning each observation to a cluster with the closest centroid
+        (center of cluster).
+    </p>
+    <!-- <p>
+        Training is done by first generating K number of centroids randomly,
+        then iterating through each training observations and assigning them to
+        the cluster with closest centroid. Then recalculating each cluster's
+        centroid by finding the mean of the cluster. And repeat
+    </p>
+    <p style="margin-bottom: 0px">References:</p>
+    <ul>
+        <li>
+            <a href="https://en.wikipedia.org/wiki/K-means_clustering"
+                >https://en.wikipedia.org/wiki/K-means_clustering</a
+            >
+        </li>
+        <li>
+            <a
+                href="https://scikit-learn.org/stable/modules/clustering.html#k-means"
+                >https://scikit-learn.org/stable/modules/clustering.html#k-means</a
+            >
+        </li>
+    </ul> -->
     <KMeansParamComponent bind:param={state.param.kmeans} />
 {:else if state.selected == "knn"}
-    <h3>K Nearest Neighbors Hyperparameters</h3>
+    <h3>K Nearest Neighbors</h3>
     <KNearestNeighborsParamComponent bind:param={state.param.knn} />
 {:else if state.selected == "perceptron"}
-    <h3>Perceptron (1-layer Neural Network) Hyperparameters</h3>
+    <h3>Perceptron (1-layer Neural Network)</h3>
     <PerceptronParamComponent bind:param={state.param.perceptron} />
 {/if}
 
+<div>
+    <canvas id="training_chart" />
+</div>
 <div class="grid">
     {#if state.is_training == false}
         <button
@@ -234,30 +259,32 @@
     <!-- <button class="secondary">Save Model</button> -->
 </div>
 
-<p>
-    Training {state.selected}, using params: {JSON.stringify(
-        state.param[state.selected]
-    )}
-</p>
-<canvas id="training_chart" />
+<footer>
+    <h5>
+        Evaluate the model using MNSIT testing dataset (10,000 observations):
+    </h5>
+    <p>Error Rate:</p>
+    <p>Actual vs Predicted Matrix</p>
+    <button>Evaluate</button>
 
-<div class="grid">
-    <div>
-        <p>Draw a digit:</p>
-        <div id="canvas-wrapper">
-            <canvas id="canvas" width="300" height="300" />
+    <h5>Test the model by drawing a digit yourself:</h5>
+    <div class="grid">
+        <div>
+            <div id="canvas-wrapper">
+                <canvas id="canvas" width="300" height="300" />
+            </div>
+            <button on:click={clear_canvas}>Clear</button>
+            <div class="grid" style="display: none;">
+                <canvas id="cropped-canvas" width="28" height="28" />
+                <canvas id="scaled-canvas" width="28" height="28" />
+            </div>
         </div>
-        <button on:click={clear_canvas}>Clear</button>
-        <div class="grid" style="display: none;">
-            <canvas id="cropped-canvas" width="28" height="28" />
-            <canvas id="scaled-canvas" width="28" height="28" />
+        <div>
+            <p>Your model is "00"% sure this is a "digit"</p>
+            <canvas id="probability_chart" />
         </div>
     </div>
-    <div>
-        <p>Probability Result</p>
-        <canvas id="probability_chart" />
-    </div>
-</div>
+</footer>
 
 <style>
     #canvas-wrapper {

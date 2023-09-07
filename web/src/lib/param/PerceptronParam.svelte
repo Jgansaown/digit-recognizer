@@ -2,6 +2,7 @@
     export let param: PerceptronParam;
 </script>
 
+<h4>Hyperparameters</h4>
 <label>
     Learning Rate
     <input

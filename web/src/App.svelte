@@ -5,9 +5,8 @@
 
 <NavBar />
 
-<main class="container">
-    <article>
-        <h2>Train your own model!</h2>
-        <ModelTrainer />
-    </article>
-</main>
+<article>
+    <ModelTrainer />
+</article>
+
+<!-- <article></article> -->
