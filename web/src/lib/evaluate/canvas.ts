@@ -1,10 +1,50 @@
-import { fabric } from "fabric";
+export function get_cropped_scaled_grayscale_image(
+    main: CanvasRenderingContext2D,
+    crop: CanvasRenderingContext2D,
+    scale: CanvasRenderingContext2D
+) {
+    const image = get_cropped_scaled_image(main, crop, scale);
+    return rgba_to_grayscale(image);
+}
+
+function get_cropped_scaled_image(
+    main: CanvasRenderingContext2D,
+    crop: CanvasRenderingContext2D,
+    scale: CanvasRenderingContext2D
+) {
+    const [w, h, croppedImage] = crops_canvas_image(main);
+
+    crop.fillStyle = "rgba(255, 255, 255, 255)";
+    crop.fillRect(0, 0, crop.canvas.width, crop.canvas.height);
+    crop.save();
+
+    crop.canvas.width = Math.max(w, h) * 1.2;
+    crop.canvas.height = Math.max(w, h) * 1.2;
+
+    const leftPadding = (crop.canvas.width - w) / 2;
+    const topPadding = (crop.canvas.height - h) / 2;
+    crop.putImageData(croppedImage, leftPadding, topPadding);
+
+    // Copy image data to scale 28x28 canvas
+    scale.save();
+    scale.clearRect(0, 0, scale.canvas.height, scale.canvas.width);
+    scale.fillStyle = "rgba(255, 255, 255, 255)"; // white non-transparent color
+    scale.fillRect(0, 0, scale.canvas.width, scale.canvas.height);
+    scale.scale(28.0 / crop.canvas.height, 28.0 / crop.canvas.width);
+    scale.drawImage(crop.canvas, 0, 0);
+
+    const { data } = scale.getImageData(0, 0, 28, 28)!;
+
+    scale.restore();
+
+    return data;
+}
 
 /**
  * Crops a canvas images and returns its image data.
  * adapted from: https://stackoverflow.com/a/22267731
  */
-export function cropImageFromCanvas(
+function crops_canvas_image(
     ctx: CanvasRenderingContext2D
 ): [number, number, ImageData] {
     const image = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -12,6 +52,10 @@ export function cropImageFromCanvas(
     return [sw, sh, ctx.getImageData(sx, sy, sw, sh)];
 }
 
+/**
+ * Crops a canvas images and returns its image data.
+ * adapted from: https://stackoverflow.com/a/22267731
+ */
 function find_cropped_image(img: ImageData) {
     const w = img.width;
     const h = img.height;

@@ -6,6 +6,6 @@ interface ModelParameters {
     perceptron: PerceptronParam;
 }
 
-function test<T extends ModelTypes>(type: T, param: ModelParameters[T]): ModelParameters[T] {
-    return param;
-}
+type ModelParametersUnion = {
+    [K in keyof ModelParameters]: { type: K; param: ModelParameters[K] };
+}[keyof ModelParameters];

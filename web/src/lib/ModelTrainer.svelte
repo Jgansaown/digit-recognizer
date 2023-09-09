@@ -2,18 +2,11 @@
     import KMeansParamComponent from "./param/KMeansParam.svelte";
     import KNearestNeighborsParamComponent from "./param/KNearestNeighborsParam.svelte";
     import PerceptronParamComponent from "./param/PerceptronParam.svelte";
+    import TrainingChart from "./training/TrainingChart.svelte";
+    import TrainingButton from "./training/TrainingButton.svelte";
+    import PredictDigit from "./evaluate/PredictDigit.svelte";
 
-    import { onMount } from "svelte";
-    import { fabric } from "fabric";
-    import {
-        create_prediction_chart,
-        create_training_chart,
-        type Chart,
-    } from "./chart";
-    import { WASMWorker } from "./worker/wasm";
-    import { cropImageFromCanvas, rgba_to_grayscale } from "./canvas";
-
-    const worker = new WASMWorker();
+    import { WasmWorker } from "./worker/wasm";
 
     const state: {
         selected: ModelTypes;
@@ -36,154 +29,57 @@
             },
         },
     };
+    let training_data: { x: number; y: number }[] = [];
+    let probability_data: number[] = [];
 
-    let training_chart: {
-        chart: Chart<"line", number[], number>;
-        append(data: number[], label: number): void;
-        reset(): void;
-    };
-    let canvas: fabric.Canvas;
-    let probability_chart: {
-        chart: Chart<"bar", number[], number>;
-        update(data: number[]): void;
-        clear(): void;
-    };
+    const worker = new WasmWorker();
 
-    onMount(() => {
-        training_chart = create_training_chart("training_chart");
+    async function start_training() {
+        training_data = [];
 
-        probability_chart = create_prediction_chart("probability_chart");
+        const data = {
+            type: state.selected,
+            param: state.param[state.selected],
+        } as ModelParametersUnion;
+        await worker.send("init_model", data);
+        // start training
+        await worker.send("start_training");
+    }
 
-        canvas = new fabric.Canvas("canvas", {
-            isDrawingMode: true,
-        });
-        canvas.freeDrawingBrush.color = "black";
-        canvas.freeDrawingBrush.width = 15;
-        canvas.backgroundColor = "rgba(255, 255, 255, 255)";
+    async function stop_training() {
+        // pause training
+        await worker.send("stop_training", null);
+    }
 
-        let timeoutid: number | undefined = undefined;
-        let is_drawing = false;
-        let is_timeout = false;
+    async function continue_training() {
+        // start training
+        await worker.send("start_training", null);
+    }
 
-        function fire() {
-            clearTimeout(timeoutid);
-            timeoutid = setTimeout(() => {
-                is_timeout = true;
-                (canvas.freeDrawingBrush as any)._finalizeAndAddPath();
-                const data = save_canvas();
-                const gray = rgba_to_grayscale(data);
+    async function reset_training() {
+        // clear model
+        await worker.send("free_model", null);
 
-                worker.predict(gray);
+        training_data = [];
+    }
 
-                is_timeout = false;
-            }, 50);
-            is_timeout = true;
+    async function on_canvas_draw(data: Float64Array) {
+        const prediction = await worker.send("predict", data, [data.buffer]);
+
+        probability_data = Array.from(prediction);
+    }
+
+    worker.on_step = (data: { i: number; err: number }) => {
+        console.log(`[main][step]: ${data.i}: err: ${data.err}`);
+
+        const param = state.param[state.selected];
+        const max_iter = "max_iter" in param ? param.max_iter : 1;
+        if (data.i >= max_iter) {
+            stop_training();
         }
-
-        canvas.on("mouse:down", (e) => {
-            is_drawing = true;
-        });
-        canvas.on("mouse:up", (e) => {
-            is_drawing = false;
-            fire();
-        });
-        canvas.on("mouse:move", (e) => {
-            if (is_drawing && is_timeout == false) {
-                // console.log(e.pointer?.x, e.pointer?.y);
-                fire();
-            }
-        });
-    });
-
-    function start_training() {
-        training_chart.reset();
-        worker.start_training(state.selected, state.param[state.selected]);
-    }
-    function stop_training() {
-        worker.stop_training();
-    }
-
-    worker.onstep = (data: {
-        i: number;
-        training_err: number;
-        testing_err: number;
-    }) => {
-        console.log(
-            `[main][step]: ${data.i}: train: ${data.training_err}, test: ${data.testing_err}`
-        );
-        training_chart.append([data.training_err, 0], data.i);
-
-        if (training_chart.chart.options.plugins?.subtitle?.text) {
-            const err = Math.trunc(data.training_err * 100);
-            training_chart.chart.options.plugins.subtitle.text = `Iteration: ${data.i}, Error Rate: ${err}%`;
+        if (data.i <= max_iter) {
+            training_data = [...training_data, { x: data.i, y: data.err }];
         }
-    };
-
-    function clear_canvas() {
-        canvas.clear();
-        canvas.backgroundColor = "rgba(255, 255, 255, 255)";
-        canvas.renderAll();
-
-        const main = (
-            document.getElementById("canvas") as HTMLCanvasElement
-        ).getContext("2d", { willReadFrequently: true })!;
-        const cropped = (
-            document.getElementById("cropped-canvas") as HTMLCanvasElement
-        ).getContext("2d", { willReadFrequently: true })!;
-        const scaled = (
-            document.getElementById("scaled-canvas") as HTMLCanvasElement
-        ).getContext("2d", {
-            willReadFrequently: true,
-        })!;
-
-        main.clearRect(0, 0, main.canvas.width, main.canvas.height);
-        cropped.clearRect(0, 0, cropped.canvas.width, cropped.canvas.height);
-        scaled.clearRect(0, 0, scaled.canvas.width, scaled.canvas.height);
-
-        probability_chart.clear();
-    }
-    function save_canvas() {
-        const main = (
-            document.getElementById("canvas") as HTMLCanvasElement
-        ).getContext("2d", { willReadFrequently: true })!;
-        const cropped = (
-            document.getElementById("cropped-canvas") as HTMLCanvasElement
-        ).getContext("2d", { willReadFrequently: true })!;
-        const scaled = (
-            document.getElementById("scaled-canvas") as HTMLCanvasElement
-        ).getContext("2d", {
-            willReadFrequently: true,
-        })!;
-
-        cropped.fillStyle = "rgba(255, 255, 255, 255)";
-        cropped.fillRect(0, 0, cropped.canvas.width, cropped.canvas.height);
-        cropped.save();
-
-        const [w, h, croppedImage] = cropImageFromCanvas(main);
-        cropped.canvas.width = Math.max(w, h) * 1.2;
-        cropped.canvas.height = Math.max(w, h) * 1.2;
-        const leftPadding = (cropped.canvas.width - w) / 2;
-        const topPadding = (cropped.canvas.height - h) / 2;
-        // console.log(croppedImage);
-        cropped.putImageData(croppedImage, leftPadding, topPadding);
-
-        // Copy image data to scale 28x28 canvas
-        scaled.save();
-        scaled.clearRect(0, 0, scaled.canvas.height, scaled.canvas.width);
-        scaled.fillStyle = "rgba(255, 255, 255, 255)"; // white non-transparent color
-        scaled.fillRect(0, 0, cropped.canvas.width, cropped.canvas.height);
-        scaled.scale(28.0 / cropped.canvas.height, 28.0 / cropped.canvas.width);
-        scaled.drawImage(cropped.canvas, 0, 0);
-
-        const { data } = scaled.getImageData(0, 0, 28, 28)!;
-
-        scaled.restore();
-
-        return data;
-    }
-
-    worker.onprediction = (data) => {
-        probability_chart.update(data);
     };
 </script>
 
@@ -237,74 +133,24 @@
     <PerceptronParamComponent bind:param={state.param.perceptron} />
 {/if}
 
-<div>
-    <canvas id="training_chart" />
-</div>
-<div class="grid">
-    {#if state.is_training == false}
-        <button
-            on:click={() => {
-                state.is_training = true;
-                start_training();
-            }}>Start Training</button
-        >
-    {:else}
-        <button
-            on:click={() => {
-                state.is_training = false;
-                stop_training();
-            }}>Stop Training</button
-        >
-    {/if}
-    <!-- <button class="secondary">Save Model</button> -->
-</div>
+<!-- <TrainingParam /> -->
+<TrainingChart data={training_data} />
+<TrainingButton
+    on:start={start_training}
+    on:stop={stop_training}
+    on:continue={continue_training}
+    on:reset={reset_training}
+/>
 
 <footer>
-    <h5>
-        Evaluate the model using MNSIT testing dataset (10,000 observations):
-    </h5>
+    <h5>Test the model using MNIST testing dataset (10,000 observations):</h5>
     <p>Error Rate:</p>
     <p>Actual vs Predicted Matrix</p>
     <button>Evaluate</button>
 
-    <h5>Test the model by drawing a digit yourself:</h5>
-    <div class="grid">
-        <div>
-            <div id="canvas-wrapper">
-                <canvas id="canvas" width="300" height="300" />
-            </div>
-            <button on:click={clear_canvas}>Clear</button>
-            <div class="grid" style="display: none;">
-                <canvas id="cropped-canvas" width="28" height="28" />
-                <canvas id="scaled-canvas" width="28" height="28" />
-            </div>
-        </div>
-        <div>
-            <p>Your model is "00"% sure this is a "digit"</p>
-            <canvas id="probability_chart" />
-        </div>
-    </div>
+    <h5>Test the model by drawing a digit:</h5>
+    <PredictDigit
+        on:fire={({ detail }) => on_canvas_draw(detail)}
+        data={probability_data}
+    />
 </footer>
-
-<style>
-    #canvas-wrapper {
-        border: 1px solid var(--contrast);
-        background-color: white;
-        width: 310px;
-        height: 310px;
-        margin: 1em auto;
-        padding: 5px;
-    }
-    #cropped-canvas {
-        /* display: none; */
-        border: 1px solid var(--contrast);
-        width: 100px;
-        height: 100px;
-    }
-    #scaled-canvas {
-        /* display: none; */
-        border: 1px solid var(--contrast);
-        width: 100px;
-        height: 100px;
-    }
-</style>

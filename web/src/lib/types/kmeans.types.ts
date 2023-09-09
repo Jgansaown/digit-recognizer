@@ -3,4 +3,11 @@ interface KMeansParam {
     max_iter: number;
 }
 
-type KMeansType = 'kmeans';
+type KMeansType = "kmeans";
+
+// interface A {
+//     type: "kmeans";
+//     param: {
+//         n_clusters: number;
+//     };
+// }

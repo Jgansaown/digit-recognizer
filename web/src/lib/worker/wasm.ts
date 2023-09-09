@@ -1,56 +1,43 @@
-import {
-    get_worker_pipe,
-    type StartTrainingData,
-    type WorkerPipe,
-} from "./lib";
+import { type AckMsg, type ReqMsg } from "./wasm.types";
+import { Pipe } from "./wasm.pipe";
 
 /**
  * Interface to access the WASM worker from the main thread
  */
-export class WASMWorker {
-    pipe: WorkerPipe;
-    callbacks: {
-        step?: (data: any) => void;
-        prediction?: (data: any) => void;
+export class WasmWorker {
+    pipe: Pipe<Worker, ReqMsg, AckMsg>;
+    handlers: {
+        step?: (value: ReqMsg["step"]) => AckMsg["step"];
     } = {};
 
     constructor() {
-        this.pipe = get_worker_pipe(
+        this.pipe = new Pipe(
             new Worker(new URL("./wasm.worker.ts", import.meta.url), {
                 type: "module",
             })
         );
-
-        this.pipe.handleCommand(({ cmd, data }) => {
-            switch (cmd) {
-                case "step":
-                case "prediction":
-                    this.callbacks[cmd]?.call(null, data);
-                    break;
-                default:
-                    break;
-            }
+        this.pipe.handle("step", (data) => {
+            const ret = this.handlers["step"]?.call(null, data);
+            return { value: ret };
         });
     }
 
-    start_training<T extends ModelTypes>(type: T, param: ModelParameters[T]) {
-        const data = { type, param } as StartTrainingData;
-        this.pipe.sendCommand("start_training", data);
+    set on_step(cb: (data: ReqMsg["step"]) => AckMsg["step"]) {
+        this.handlers["step"] = cb;
     }
 
-    stop_training() {
-        this.pipe.sendCommand("stop_training", null);
-    }
-
-    set onstep(cb: (data: any) => void) {
-        this.callbacks.step = cb;
-    }
-
-    predict(data: Float64Array) {
-        this.pipe.sendCommandTransfer("predict", data);
-    }
-
-    set onprediction(cb: (data: any) => void) {
-        this.callbacks.prediction = cb;
+    /**
+     * Sends message to the web worker
+     */
+    send<K extends keyof ReqMsg>(
+        cmd: K,
+        value?: ReqMsg[K],
+        transfer?: Transferable[]
+    ): Promise<AckMsg[K]> {
+        if (value == undefined) {
+            return this.pipe.request(cmd, null as ReqMsg[K], transfer);
+        } else {
+            return this.pipe.request(cmd, value, transfer);
+        }
     }
 }

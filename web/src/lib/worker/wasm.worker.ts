@@ -7,14 +7,10 @@ import init, {
     Perceptron,
     TemplateModel,
 } from "@wasm/mnist";
+import { type AckMsg, type ReqMsg } from "./wasm.types";
+import { Pipe } from "./wasm.pipe";
 
-import {
-    get_worker_pipe,
-    type StartTrainingData,
-    type WorkerPipe,
-} from "./lib";
-
-function create_new_model({ type, param }: StartTrainingData) {
+function create_new_model({ type, param }: ModelParametersUnion) {
     switch (type) {
         case "kmeans":
             return new KMeans(param.n_clusters, 28 * 28);
@@ -27,52 +23,88 @@ function create_new_model({ type, param }: StartTrainingData) {
     }
 }
 
-class Model {
-    pipe: WorkerPipe;
-    model?: TemplateModel = undefined;
-    interval_id?: number = undefined;
+class WasmState {
+    pipe: Pipe<typeof self, ReqMsg, AckMsg> = new Pipe(self);
+    dataset: {
+        training: Dataset;
+        testing: Dataset;
+    };
 
-    constructor(pipe: WorkerPipe) {
-        this.pipe = pipe;
+    model: TemplateModel | undefined = undefined;
+    timer: number | undefined = undefined;
+    iteration: number = 0;
+
+    constructor() {
+        this.dataset = {
+            training: MNIST.training_from_static(),
+            testing: MNIST.testing_from_static(),
+        };
+
+        this.pipe.handle("init_model", (data) => {
+            const ret = this.init_model(data);
+            return { value: ret };
+        });
+        this.pipe.handle("free_model", () => {
+            const ret = this.free_model();
+            return { value: ret };
+        });
+        this.pipe.handle("start_training", () => {
+            const ret = this.start_training();
+            return { value: ret };
+        });
+        this.pipe.handle("stop_training", () => {
+            const ret = this.stop_training();
+            return { value: ret };
+        });
+        this.pipe.handle("predict", (data) => {
+            return this.predict(data);
+        });
     }
 
-    start_training(
-        data: StartTrainingData,
-        dataset: { training: Dataset; testing: Dataset }
-    ) {
+    init_model(data: ModelParametersUnion) {
+        if (this.model == undefined) {
+            this.model = create_new_model(data);
+        }
+    }
+
+    free_model() {
         this.stop_training();
+        this.iteration = 0;
+
         if (this.model != undefined) {
             this.model.free();
             this.model = undefined;
         }
-        this.model = create_new_model(data);
+    }
 
-        let i = 0;
-
-        this.interval_id = setInterval(() => {
-            const training_err = this.model?.step(dataset.training);
-            // const testing_err = this.model?.evaluate(dataset.testing);
-
-            i++;
-
-            this.pipe.sendCommand("step", { i, training_err, testing_err: 0 });
-
-            if (!("max_iter" in data.param) || i >= data.param.max_iter) {
-                // done training
-                this.stop_training();
-            }
-        });
+    // can only start if model is created and no timer is currently running
+    start_training() {
+        this.timer = setTimeout(this.step.bind(this), 0);
     }
 
     stop_training() {
-        clearInterval(this.interval_id);
-        this.interval_id = undefined;
+        clearInterval(this.timer);
+        this.timer = undefined;
     }
 
     predict(data: Float64Array) {
+        let prediction = new Float64Array();
         if (this.model) {
-            const prediction = this.model.predict(data);
-            this.pipe.sendCommandTransfer("prediction", prediction);
+            prediction = this.model.predict(data);
+        }
+        return {
+            value: prediction,
+            transfer: [prediction.buffer],
+        };
+    }
+
+    /** Hardcoded maximum of 1,000,000 steps */
+    private step() {
+        if (this.model && this.iteration <= 1_000_000) {
+            const err = this.model.step(this.dataset.training);
+            this.iteration++;
+            this.pipe.request("step", { i: this.iteration, err });
+            this.timer = setTimeout(this.step.bind(this), 0);
         }
     }
 }
@@ -85,40 +117,8 @@ async function initialize() {
 
     set_panic_hook();
 
-    const pipe = get_worker_pipe(self as DedicatedWorkerGlobalScope);
-    const model = new Model(pipe);
-
-    const dataset = {
-        training: MNIST.training_from_static(),
-        testing: MNIST.testing_from_static(),
-    };
-
-    pipe.handleCommand(({ cmd, data }) => {
-        switch (cmd) {
-            case "start_training":
-                console.log("[Worker] Received start training event");
-                console.log(
-                    `[Worker] Training ${
-                        data.type
-                    } with param: ${JSON.stringify(data.param)}`
-                );
-                model.start_training(data, dataset);
-
-                break;
-            case "stop_training":
-                console.log("[Worker] Received stop training event");
-                model.stop_training();
-
-                break;
-            case "predict":
-                console.log("[Worker] Received predict event");
-                model.predict(data);
-
-                break;
-            default:
-                break;
-        }
-    });
+    return new WasmState();
 }
 
-initialize();
+let state: WasmState;
+initialize().then((_state) => (state = _state));
