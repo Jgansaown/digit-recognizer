@@ -43,7 +43,7 @@
         } as ModelParametersUnion;
         await worker.send("init_model", data);
         // start training
-        await worker.send("start_training");
+        await worker.send("start_training", null);
     }
 
     async function stop_training() {
@@ -81,6 +81,16 @@
             training_data = [...training_data, { x: data.i, y: data.err }];
         }
     };
+
+    let evaluation_error: number;
+    let is_evaluating = false;
+    function on_evaluate() {
+        is_evaluating = true;
+        worker.send("evaluate", null).then((err) => {
+            evaluation_error = err;
+            is_evaluating = false;
+        });
+    }
 </script>
 
 <header>
@@ -144,9 +154,11 @@
 
 <footer>
     <h5>Test the model using MNIST testing dataset (10,000 observations):</h5>
-    <p>Error Rate:</p>
-    <p>Actual vs Predicted Matrix</p>
-    <button>Evaluate</button>
+    <p>Error Rate: {(evaluation_error * 100).toFixed(2)}%</p>
+    <!-- <p>Actual vs Predicted Matrix</p> -->
+    <button on:click={on_evaluate} aria-busy={is_evaluating}
+        >{is_evaluating ? "Evaluating" : "Evaluate"}</button
+    >
 
     <h5>Test the model by drawing a digit:</h5>
     <PredictDigit

@@ -4,6 +4,7 @@ export interface ReqMsg {
     free_model: null;
     start_training: null;
     stop_training: null;
+    evaluate: null;
     predict: Float64Array;
     // from worker
     step: { i: number; err: number };
@@ -15,6 +16,7 @@ export interface AckMsg {
     free_model: void;
     start_training: void;
     stop_training: void;
+    evaluate: number;
     predict: Float64Array;
     // to worker
     step: void;

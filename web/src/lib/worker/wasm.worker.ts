@@ -41,24 +41,33 @@ class WasmState {
         };
 
         this.pipe.handle("init_model", (data) => {
+            console.log(`[worker][init_model]: ${JSON.stringify(data)}`);
             const ret = this.init_model(data);
             return { value: ret };
         });
         this.pipe.handle("free_model", () => {
+            console.log(`[worker][free_model]`);
             const ret = this.free_model();
             return { value: ret };
         });
         this.pipe.handle("start_training", () => {
+            console.log(`[worker][start_training]`);
             const ret = this.start_training();
             return { value: ret };
         });
         this.pipe.handle("stop_training", () => {
+            console.log(`[worker][stop_training]`);
             const ret = this.stop_training();
             return { value: ret };
         });
         this.pipe.handle("predict", (data) => {
+            console.log(`[worker][predict]`);
             return this.predict(data);
         });
+        this.pipe.handle("evaluate", () => {
+            console.log(`[worker][evaluate]`);
+            return this.evaluate();
+        })
     }
 
     init_model(data: ModelParametersUnion) {
@@ -96,6 +105,14 @@ class WasmState {
             value: prediction,
             transfer: [prediction.buffer],
         };
+    }
+
+    evaluate() {
+        let value = NaN;
+        if (this.model) {
+            value = this.model.evaluate(this.dataset.testing);
+        }
+        return { value }
     }
 
     /** Hardcoded maximum of 1,000,000 steps */

@@ -31,13 +31,9 @@ export class WasmWorker {
      */
     send<K extends keyof ReqMsg>(
         cmd: K,
-        value?: ReqMsg[K],
+        value: ReqMsg[K],
         transfer?: Transferable[]
     ): Promise<AckMsg[K]> {
-        if (value == undefined) {
-            return this.pipe.request(cmd, null as ReqMsg[K], transfer);
-        } else {
-            return this.pipe.request(cmd, value, transfer);
-        }
+        return this.pipe.request(cmd, value, transfer);
     }
 }
