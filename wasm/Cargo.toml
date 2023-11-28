@@ -18,7 +18,7 @@ ndarray-rand = { version = "0.14" }
 ndarray-stats = { version = "0.5" }
 getrandom = { version = "0.2.10", features = ["js"] }
 
-wasm-bindgen = "0.2.84"
+wasm-bindgen = "0.2.89"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
