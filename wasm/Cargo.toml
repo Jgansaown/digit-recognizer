@@ -16,7 +16,7 @@ flate2 = { version = "1.0" }
 ndarray = { version = "0.15" }
 ndarray-rand = { version = "0.14" }
 ndarray-stats = { version = "0.5" }
-getrandom = { version = "0.2.10", features = ["js"] }
+getrandom = { version = "0.2.12", features = ["js"] }
 
 wasm-bindgen = "0.2.84"
 
